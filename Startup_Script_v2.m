@@ -7,7 +7,6 @@ close all;
 clc;
 
 %% Simulation Settings and Bike Parameters
-
 % General Parameters
 
     % Gravitational Acceleration
