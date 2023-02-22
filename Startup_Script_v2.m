@@ -7,6 +7,7 @@ close all;
 clc;
 
 
+a = 10;
 %% Simulation Settings and Bike Parameters
 
 % General Parameters
