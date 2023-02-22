@@ -9,7 +9,7 @@ clc;
 
 a = 10;
 %% Simulation Settings and Bike Parameters
-
+v = 10-a;
 % General Parameters
 
     % Gravitational Acceleration
