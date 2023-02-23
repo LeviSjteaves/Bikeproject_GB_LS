@@ -13,7 +13,7 @@ clc;
         g = 9.81;
 
     % Simulation time
-        sim_time = 200;
+        sim_time = 300;
 
     % Name of the model
         model = 'Main_v2';
@@ -165,7 +165,7 @@ Ts_ref = Ts;
 % psiref=[psiref(1) psiref];
 
 % Infinite
-N=1000;
+N=100;
 t = (0:(N-1))*Ts_ref;
 scale = 20;
 xref = scale*cos(t);
@@ -191,14 +191,14 @@ end
 %% Start the Simulation
 
 tic
-try sim(model)
+try Results = sim(model);
     catch error_details %note: the model has runned for one time here
 end
 toc
 
 %% Messages
-if stop == 1
-    disp('End of the trajectory has been reached');
+if Results.stop.Data(end) == 1
+    disp('Message: End of the trajectory has been reached');
 end
 
 %% Ploting
@@ -206,7 +206,7 @@ end
 figure();
 plot(Xref,Yref);
 hold on;
-plot(ans.trueX.Data(:,1),ans.trueY.Data(:,1));
+plot(Results.trueX.Data(:,1),Results.trueY.Data(:,1));
 legend('Ref','true');
 xlabel('X-dir');
 ylabel('Y-dir');
@@ -214,9 +214,9 @@ grid on;
 title('Trajectory');
 
 % figure();
-% plot(ans.refX.Time(:,1),ans.refX.Data(:,1));
+% plot(Results.refX.Time(:,1),Results.refX.Data(:,1));
 % hold on;
-% plot(ans.trueX.Time(:,1),ans.trueX.Data(:,1));
+% plot(Results.trueX.Time(:,1),Results.trueX.Data(:,1));
 % legend('Xref','trueX');
 % xlabel('Time [t]');
 % ylabel('Position X [m]');
@@ -224,9 +224,9 @@ title('Trajectory');
 % title('X-coordinate');
 % 
 % figure();
-% plot(ans.refY.Time(:,1),ans.refY.Data(:,1));
+% plot(Results.refY.Time(:,1),Results.refY.Data(:,1));
 % hold on;
-% plot(ans.trueY.Time(:,1),ans.trueY.Data(:,1));
+% plot(Results.trueY.Time(:,1),Results.trueY.Data(:,1));
 % legend('Yref','trueY');
 % xlabel('Time [t]');
 % ylabel('Position Y [m]');
@@ -234,9 +234,9 @@ title('Trajectory');
 % title('Y-coordinate');
 % 
 % figure();
-% plot(ans.refPsi.Time(:,1),ans.refPsi.Data(:,1));
+% plot(Results.refPsi.Time(:,1),Results.refPsi.Data(:,1));
 % hold on;
-% plot(ans.truePsi.Time(:,1),ans.truePsi.Data(:,1));
+% plot(Results.truePsi.Time(:,1),Results.truePsi.Data(:,1));
 % legend('Psiref','truePsi');
 % xlabel('Time [t]');
 % ylabel('Angle');
@@ -244,9 +244,9 @@ title('Trajectory');
 % title('Heading');
 % 
 % figure();
-% plot(ans.refRoll.Time(:,1),ans.refRoll.Data(:,1));
+% plot(Results.refRoll.Time(:,1),Results.refRoll.Data(:,1));
 % hold on;
-% plot(ans.trueRoll.Time(:,1),ans.trueRoll.Data(:,1));
+% plot(Results.trueRoll.Time(:,1),Results.trueRoll.Data(:,1));
 % legend('Rollref','trueRoll');
 % xlabel('Time [t]');
 % ylabel('Angle');
@@ -255,13 +255,13 @@ title('Trajectory');
 
 figure()
 hold on
-plot(ans.closest_point.Data)
-plot(ans.ids.Data)
+plot(Results.closest_point.Data)
+plot(Results.ids.Data)
 
 figure()
 hold on
-plot(ans.error1.Time,ans.error1.Data)
-plot(ans.error2.Time,ans.error2.Data) 
+plot(Results.error1.Time,Results.error1.Data)
+plot(Results.error2.Time,Results.error2.Data) 
 xlabel('Iteration')
 ylabel('Degree')
 legend('Error 1','Error 2')
