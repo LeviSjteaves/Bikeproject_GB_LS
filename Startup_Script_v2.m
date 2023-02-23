@@ -1,5 +1,6 @@
 
 %% clear the possible remnant on previous running
+
 set(0,'defaulttextinterpreter','none');
 dbclear all;
 clear;
@@ -13,7 +14,7 @@ clc;
         g = 9.81;
 
     % Simulation time
-        sim_time = 40;
+        sim_time = 100;
 
     % Name of the model
         model = 'Main_v2';
@@ -104,6 +105,7 @@ I_balancing_inner = 0;
 D_balancing_inner = 0;  
 
 %% The LQR controller
+
 %error model for LQR controller calculation
 A_con=[0 v;0 0];
 B_con=[bike_params.a*v/bike_params.b;v/bike_params.b];
@@ -123,7 +125,7 @@ e1_max=abs(-k2*e2_max/k1);% k1,k2 has been known, so we can calculate e1_max
 Ts_ref = Ts;
 N = 3000;
 scale = 100;
-type = 'circle';
+type = 'infinite';
 
 [Xref,Yref,Psiref] = ReferenceGenerator(type,Ts_ref,N,scale);
 test_curve=[Xref,Yref,Psiref];
@@ -151,6 +153,7 @@ end
 
 %% Ploting
 
+% Trajectory
 figure();
 plot(Xref,Yref);
 hold on;
@@ -161,58 +164,87 @@ ylabel('Y-dir');
 grid on;
 title('Trajectory');
 
-% figure();
-% plot(Results.refX.Time(:,1),Results.refX.Data(:,1));
-% hold on;
-% plot(Results.trueX.Time(:,1),Results.trueX.Data(:,1));
-% legend('Xref','trueX');
-% xlabel('Time [t]');
-% ylabel('Position X [m]');
-% grid on;
-% title('X-coordinate');
-% 
-% figure();
-% plot(Results.refY.Time(:,1),Results.refY.Data(:,1));
-% hold on;
-% plot(Results.trueY.Time(:,1),Results.trueY.Data(:,1));
-% legend('Yref','trueY');
-% xlabel('Time [t]');
-% ylabel('Position Y [m]');
-% grid on;
-% title('Y-coordinate');
-% 
-% figure();
-% plot(Results.refPsi.Time(:,1),Results.refPsi.Data(:,1));
-% hold on;
-% plot(Results.truePsi.Time(:,1),Results.truePsi.Data(:,1));
-% legend('Psiref','truePsi');
-% xlabel('Time [t]');
-% ylabel('Angle');
-% grid on;
-% title('Heading');
-% 
-% figure();
-% plot(Results.refRoll.Time(:,1),Results.refRoll.Data(:,1));
-% hold on;
-% plot(Results.trueRoll.Time(:,1),Results.trueRoll.Data(:,1));
-% legend('Rollref','trueRoll');
-% xlabel('Time [t]');
-% ylabel('Angle');
-% grid on;
-% title('Roll');
+% X, Y, Psi
+figure();
+subplot(3,1,1)
+plot(Results.refX.Time(:,1),Results.refX.Data(:,1));
+hold on;
+plot(Results.trueX.Time(:,1),Results.trueX.Data(:,1));
+legend('Xref','trueX');
+xlabel('Time [t]');
+ylabel('Position X [m]');
+grid on;
+title('X-coordinate');
+subplot(3,1,2);
+plot(Results.refY.Time(:,1),Results.refY.Data(:,1));
+hold on;
+plot(Results.trueY.Time(:,1),Results.trueY.Data(:,1));
+legend('Yref','trueY');
+xlabel('Time [t]');
+ylabel('Position Y [m]');
+grid on;
+title('Y-coordinate');
+subplot(3,1,3)
+plot(Results.refPsi.Time(:,1),Results.refPsi.Data(:,1));
+hold on;
+plot(Results.truePsi.Time(:,1),Results.truePsi.Data(:,1));
+legend('Psiref','truePsi');
+xlabel('Time [t]');
+ylabel('Angle');
+grid on;
+title('Heading');
 
-figure()
+% Roll and Roll_rate
+figure();
+subplot(2,1,1)
+plot(Results.refRoll.Time(:,1),Results.refRoll.Data(:,1));
+hold on;
+plot(Results.trueRoll.Time(:,1),Results.trueRoll.Data(:,1));
+legend('Rollref','trueRoll');
+xlabel('Time [t]');
+ylabel('Angle');
+grid on;
+title('Roll');
+subplot(2,1,2)
+plot(Results.trueRoll_rate.Time(:,1),Results.trueRoll_rate.Data(:,1));
+xlabel('Time [t]');
+ylabel('Angle');
+grid on;
+title('Roll rate');
+
+% Steer angle and rate
+figure();
+subplot(2,1,1)
+plot(Results.steer_angle.Time(:,1),Results.steer_angle.Data(:,1)) 
+xlabel('Time')
+ylabel('Angle')
+title('Steer angle')
+subplot(2,1,2)
+plot(Results.steer_rate.Time(:,1),Results.steer_rate.Data(:,1))
+xlabel('Time [t]')
+ylabel('Angle/s')
+title('Steer rate')
+
+% Ids and closest point index
+figure();
 hold on
 plot(Results.closest_point.Data)
 plot(Results.ids.Data)
+title('Closes+ids')
+legend('Closest index', 'ids')
 
-figure()
-hold on
-plot(Results.error1.Time,Results.error1.Data)
+% Lateral and heading errors
+figure();
+subplot(1,2,1)
 plot(Results.error2.Time,Results.error2.Data) 
 xlabel('Iteration')
+ylabel('Distance [m]')
+title('Lateral error')
+subplot(1,2,2)
+plot(Results.error1.Time,Results.error1.Data)
+xlabel('Iteration')
 ylabel('Degree')
-legend('Error 1','Error 2')
+title('Heading error')
 
 %% Utility Functions
 

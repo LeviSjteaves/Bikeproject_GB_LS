@@ -17,7 +17,7 @@ function [initialization_new] = referenceTest(traj,Th,Ts,initialization)
     end
         
     % Density of datapoints
-    Min_density_distance = 1;
+    Min_density_distance = 10;
     for i = 1:n-1
         dist = sqrt((traj(i,1)-traj(i+1,1))^2+(traj(i,2)-traj(i+1,2))^2);
         if dist > Min_density_distance
@@ -28,7 +28,7 @@ function [initialization_new] = referenceTest(traj,Th,Ts,initialization)
   
     % Sharp turn
     for i = 1:n-1
-       if abs(traj(i,3)-traj(i+1,3))> pi/4 % We can change
+       if abs(traj(i,3)-traj(i+1,3))> 2*pi/3 % We can change it
            disp('Warning: Too sharp turn during the trajectory')
            % issue: what happens if we record the trajectory with GPS and
            % it is quite noisy
