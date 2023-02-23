@@ -9,6 +9,7 @@ function [initialization_new] = referenceTest(traj,Th,Ts,initialization)
     end
     
     % Initialization errors
+    initialization_new = initialization;
     if traj(1,1) ~= initialization(1) || traj(1,2) ~= initialization(2) || traj(1,3) ~= initialization(3)
         disp('Warning: initialization is not correct');
         initialization_new(1,1) = traj(1,1);

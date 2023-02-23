@@ -14,7 +14,7 @@ clc;
         g = 9.81;
 
     % Simulation time
-        sim_time = 100;
+        sim_time = 95;
 
     % Name of the model
         model = 'Main_v2';
@@ -23,7 +23,7 @@ clc;
         Ts = 0.01; 
 
     % Horizon time
-        Th = 1;
+        Th = 0.02;
 
 % Initial states
 
@@ -122,8 +122,8 @@ e1_max=abs(-k2*e2_max/k1);% k1,k2 has been known, so we can calculate e1_max
 
 %% Reference trajectory generation
 
-Ts_ref = Ts;
-N = 3000;
+Ts_ref = 10*Ts;
+N = 50;
 scale = 100;
 type = 'infinite';
 
@@ -137,6 +137,7 @@ initial_pose_new = referenceTest(test_curve,Th,Ts,initial_pose);
 initial_state.x = initial_pose_new(1);
 initial_state.y = initial_pose_new(2);
 initial_state.heading = initial_pose_new(3);
+initial_pose = [initial_state.x; initial_state.y; initial_state.heading];
 
 %% Start the Simulation
 
