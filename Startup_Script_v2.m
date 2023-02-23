@@ -13,7 +13,7 @@ clc;
         g = 9.81;
 
     % Simulation time
-        sim_time = 100;
+        sim_time = 40;
 
     % Name of the model
         model = 'Main_v2';
@@ -34,9 +34,9 @@ clc;
         initial_state.steering = deg2rad(0);
 
     % Initial Pose (X,Y,\theta)
-        initial_state.x = 20;
+        initial_state.x = 0;
         initial_state.y = 0;
-        initial_state.heading = deg2rad(90);
+        initial_state.heading = deg2rad(0);
         initial_pose = [initial_state.x; initial_state.y; initial_state.heading];
 
 % Constant Speed [m/s]
@@ -127,10 +127,14 @@ type = 'circle';
 
 [Xref,Yref,Psiref] = ReferenceGenerator(type,Ts_ref,N,scale);
 test_curve=[Xref,Yref,Psiref];
+Nn = size(test_curve,1);
 
 %% Warnings
 
-initial_pose = referenceTest(test_curve,Th,Ts,initial_pose);
+initial_pose_new = referenceTest(test_curve,Th,Ts,initial_pose);
+initial_state.x = initial_pose_new(1);
+initial_state.y = initial_pose_new(2);
+initial_state.heading = initial_pose_new(3);
 
 %% Start the Simulation
 
