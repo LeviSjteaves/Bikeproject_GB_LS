@@ -122,14 +122,16 @@ e1_max=abs(-k2*e2_max/k1);% k1,k2 has been known, so we can calculate e1_max
 
 %% Reference trajectory generation
 
-Ts_ref = 10*Ts;
-N = 50;
-scale = 100;
+Ts_ref = Ts; % Sampling time for reference generation
+N = 50; % # of reference points
+scale = 100; % only for infinite and circle
+
+% options: sharp_turn, line, infinite, circle, ascent_sin, smooth_curve
 type = 'infinite';
 
 [Xref,Yref,Psiref] = ReferenceGenerator(type,Ts_ref,N,scale);
 test_curve=[Xref,Yref,Psiref];
-Nn = size(test_curve,1);
+Nn = size(test_curve,1); % needed for simulink
 
 %% Warnings
 
@@ -187,6 +189,8 @@ grid on;
 title('Y-coordinate');
 subplot(3,1,3)
 plot(Results.refPsi.Time(:,1),Results.refPsi.Data(:,1));
+hold on;
+plot(Results.truePsi.Time(:,1),Results.truePsi.Data(:,1));
 hold on;
 plot(Results.truePsi.Time(:,1),Results.truePsi.Data(:,1));
 legend('Psiref','truePsi');

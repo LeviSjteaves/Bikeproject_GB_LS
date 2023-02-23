@@ -24,8 +24,8 @@ function [Xref,Yref,Psiref] = ReferenceGenerator(type,Ts_ref,N,scale)
 
         case 'circle'
             t = (0:(N-1))*Ts_ref;
-            xref = 30*sin(0.15*t);
-            yref= -30*cos(0.15*t)+30;
+            xref = scale*sin(0.15*t);
+            yref= -scale*cos(0.15*t)+30;
             psiref=atan2(yref(2:N)-yref(1:N-1),xref(2:N)-xref(1:N-1)); 
             psiref=[psiref(1) psiref];
 

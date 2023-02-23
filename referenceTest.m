@@ -29,7 +29,7 @@ function [initialization_new] = referenceTest(traj,Th,Ts,initialization)
   
     % Sharp turn
     for i = 1:n-1
-       if abs(traj(i,3)-traj(i+1,3))> 2*pi/3 % We can change it
+       if abs(traj(i,3)-traj(i+1,3))> pi/3 % We can change it
            disp('Warning: Too sharp turn during the trajectory')
            % issue: what happens if we record the trajectory with GPS and
            % it is quite noisy
