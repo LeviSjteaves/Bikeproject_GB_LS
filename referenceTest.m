@@ -1,30 +1,38 @@
 function [initialization_new] = referenceTest(traj,Th,Ts,initialization)
     % Check if the trajectory is valid
-    traj_new = traj;
+    [n,m] = size(traj);
 
     % Minimun number of reference points
-    if N<(Th/Ts)
-        disp('Not enough reference points');
-
+    if n<(Th/Ts)
+        disp('Warning: Not enough reference points');
+        % Correction needed!!!?
     end
     
     % Initialization errors
     if traj(1,1) ~= initialization(1,1) || traj(1,2) ~= initialization(1,2) || traj(1,3) ~= initialization(1,3)
-        disp('initialization is not correct');
+        disp('Warning: initialization is not correct');
         initialization_new(1,1) = traj(1,1);
         initialization_new(1,2) = traj(1,2);
         initialization_new(1,3) = traj(1,3);
     end
         
     % Density of datapoints
-
     Min_density_distance = 1;
-
-    traj(n,1)  
-    if dist > Min_density_distance
-    %in here an additional point will be added if the distence between two
-    %points is larger than a certain value
-        disp('Some points are added to make the reference more densed'); 
+    for i = 1:n-1
+        dist = sqrt((traj(i,1)-traj(i+1,1))^2+(traj(i,2)-traj(i+1,2))^2);
+        if dist > Min_density_distance
+            disp('Warning: Too sparse reference')
+            % Do you want to correct!!
+        end
     end    
-        
+  
+    % Sharp turn
+    for i = 1:n-1
+       if abs(traj(i,3)-traj(i+1,3))> pi/4 % We can change
+           disp('Warning: Too sharp turn during the trajectory')
+           % issue: what happens if we record the trajectory with GPS and
+           % it is quite noisy
+       end
+    end
+
 end

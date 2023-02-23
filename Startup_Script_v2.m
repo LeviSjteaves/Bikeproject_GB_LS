@@ -13,7 +13,7 @@ clc;
         g = 9.81;
 
     % Simulation time
-        sim_time = 300;
+        sim_time = 100;
 
     % Name of the model
         model = 'Main_v2';
@@ -121,72 +121,16 @@ e1_max=abs(-k2*e2_max/k1);% k1,k2 has been known, so we can calculate e1_max
 %% Reference trajectory generation
 
 Ts_ref = Ts;
+N = 3000;
+scale = 100;
+type = 'circle';
 
-% sharp turn
-% N=2100;           %simulation time 77s
-% t = (0:(N-1))*Ts_ref;
-% xref = 7*t;
-% yref = 15*[0*(1:300) 0.01*(1:800) 8*ones(1,1000)];
-% psiref=atan2(yref(2:N)-yref(1:N-1),xref(2:N)-xref(1:N-1)); 
-% psiref=[psiref(1) psiref];
-
-
-% changing fre sin curve
-% N=30000;
-% t = (0:(N-1))*Ts_ref;
-% xref = 1.1*t;
-% yref = 8*sin(0.02*t+0.0004*t.*t);
-% psiref=atan2(yref(2:N)-yref(1:N-1),xref(2:N)-xref(1:N-1)); 
-% psiref=[psiref(1) psiref];
-
-
-% Line
-% N=30000;
-% t = (0:(N-1))*Ts_ref;
-% xref = t;
-% yref = 0*ones(1,N);
-% psiref=atan2(yref(2:N)-yref(1:N-1),xref(2:N)-xref(1:N-1)); 
-% psiref=[psiref(1) psiref];
-
-% Smooth curve
-% N=30000; 
-% t = (0:(N-1))*Ts_ref;
-% xref = (300-t).*sin(0.15*t);
-% yref= -(300-t).*cos(0.15*t)+300;
-% psiref=atan2(yref(2:N)-yref(1:N-1),xref(2:N)-xref(1:N-1)); 
-% psiref=[psiref(1) psiref];
-
-% Circle
-% N=30000;
-% t = (0:(N-1))*Ts_ref;
-% xref = 30*sin(0.15*t);
-% yref= -30*cos(0.15*t)+30;
-% psiref=atan2(yref(2:N)-yref(1:N-1),xref(2:N)-xref(1:N-1)); 
-% psiref=[psiref(1) psiref];
-
-% Infinite
-N=100;
-t = (0:(N-1))*Ts_ref;
-scale = 20;
-xref = scale*cos(t);
-yref = scale*sin(2*t) / 2;
-psiref=atan2(yref(2:N)-yref(1:N-1),xref(2:N)-xref(1:N-1)); 
-psiref=[psiref(1) psiref];
-
-Xref=xref';%change row into column
-Yref=yref';%change row into column
-Psiref=psiref';%change row into column
-
+[Xref,Yref,Psiref] = ReferenceGenerator(type,Ts_ref,N,scale);
 test_curve=[Xref,Yref,Psiref];
-Nn=size(test_curve,1);% size of xref,yref and psiref column
 
 %% Warnings
 
-% Minimun number of reference points
-if N<(Th/Ts)
-    disp('Not enough reference points');
-end
-
+initial_pose = referenceTest(test_curve,Th,Ts,initial_pose);
 
 %% Start the Simulation
 
