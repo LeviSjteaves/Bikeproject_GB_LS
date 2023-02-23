@@ -1,0 +1,21 @@
+function [] = referenceTest(traj,Th,Ts,initialization)
+    % Check if the trajectory is valid
+
+    % Minimun number of reference points
+    if N<(Th/Ts)
+        disp('Not enough reference points');
+    end
+    
+    % Initialization
+    if traj(1,1) != initialization(1,1) || traj(1,2) != initialization(1,2) ||
+        
+
+
+
+
+
+
+
+
+
+end
