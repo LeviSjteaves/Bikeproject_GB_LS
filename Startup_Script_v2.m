@@ -13,7 +13,7 @@ clc;
         g = 9.81;
 
     % Simulation time
-        sim_time = 34;
+        sim_time = 200;
 
     % Name of the model
         model = 'Main_v2';
@@ -34,7 +34,7 @@ clc;
         initial_state.steering = deg2rad(0);
 
     % Initial Pose (X,Y,\theta)
-        initial_state.x = 100;
+        initial_state.x = 20;
         initial_state.y = 0;
         initial_state.heading = deg2rad(90);
         initial_pose = [initial_state.x; initial_state.y; initial_state.heading];
@@ -165,9 +165,9 @@ Ts_ref = Ts;
 % psiref=[psiref(1) psiref];
 
 % Infinite
-N=105;
+N=1000;
 t = (0:(N-1))*Ts_ref;
-scale = 100;
+scale = 20;
 xref = scale*cos(t);
 yref = scale*sin(2*t) / 2;
 psiref=atan2(yref(2:N)-yref(1:N-1),xref(2:N)-xref(1:N-1)); 
@@ -195,6 +195,11 @@ try sim(model)
     catch error_details %note: the model has runned for one time here
 end
 toc
+
+%% Messages
+if stop == 1
+    disp('End of the trajectory has been reached');
+end
 
 %% Ploting
 

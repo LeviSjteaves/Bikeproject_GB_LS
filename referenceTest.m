@@ -18,11 +18,13 @@ function [initialization_new] = referenceTest(traj,Th,Ts,initialization)
         
     % Density of datapoints
 
-Min_density_distance = 1;
+    Min_density_distance = 1;
 
-traj(n,1)  
-if dist > Min_density_distance
-    
-end    
+    traj(n,1)  
+    if dist > Min_density_distance
+    %in here an additional point will be added if the distence between two
+    %points is larger than a certain value
+        disp('Some points are added to make the reference more densed'); 
+    end    
         
 end
