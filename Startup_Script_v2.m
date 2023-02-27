@@ -161,7 +161,9 @@ figure();
 plot(Xref,Yref);
 hold on;
 plot(Results.trueX.Data(:,1),Results.trueY.Data(:,1));
-legend('Ref','true');
+% hold on;
+% plot(Results.predictedX.Data(:,1),Results.predictedY.Data(:,1));
+legend('Ref','true','predicted');
 xlabel('X-dir');
 ylabel('Y-dir');
 grid on;
@@ -173,7 +175,9 @@ subplot(3,1,1)
 plot(Results.refX.Time(:,1),Results.refX.Data(:,1));
 hold on;
 plot(Results.trueX.Time(:,1),Results.trueX.Data(:,1));
-legend('Xref','trueX');
+% hold on;
+% plot(Results.predictedX.Time(:,1),Results.predictedX.Data(:,1));
+legend('Xref','trueX','predictedX');
 xlabel('Time [t]');
 ylabel('Position X [m]');
 grid on;
@@ -182,7 +186,9 @@ subplot(3,1,2);
 plot(Results.refY.Time(:,1),Results.refY.Data(:,1));
 hold on;
 plot(Results.trueY.Time(:,1),Results.trueY.Data(:,1));
-legend('Yref','trueY');
+% hold on;
+% plot(Results.predictedY.Time(:,1),Results.predictedY.Data(:,1));
+legend('Yref','trueY','predictedY');
 xlabel('Time [t]');
 ylabel('Position Y [m]');
 grid on;
@@ -191,7 +197,9 @@ subplot(3,1,3)
 plot(Results.refPsi.Time(:,1),Results.refPsi.Data(:,1));
 hold on;
 plot(Results.truePsi.Time(:,1),Results.truePsi.Data(:,1));
-legend('Psiref','truePsi');
+% hold on;
+% plot(Results.predictedPsi.Time(:,1),Results.predictedPsi.Data(:,1));
+legend('Psiref','truePsi','predictedPsi');
 xlabel('Time [t]');
 ylabel('Angle');
 grid on;
@@ -203,24 +211,31 @@ subplot(2,1,1)
 plot(Results.refRoll.Time(:,1),Results.refRoll.Data(:,1));
 hold on;
 plot(Results.trueRoll.Time(:,1),Results.trueRoll.Data(:,1));
-legend('Rollref','trueRoll');
+% hold on;
+% plot(Results.predictedRoll.Time(:,1),Results.predictedRoll.Data(:,1));
+legend('Rollref','trueRoll','predictedRoll');
 xlabel('Time [t]');
 ylabel('Angle');
 grid on;
 title('Roll');
 subplot(2,1,2)
 plot(Results.trueRoll_rate.Time(:,1),Results.trueRoll_rate.Data(:,1));
+% hold on;
+% plot(Results.predictedRoll_rate.Time(:,1),Results.predictedRoll_rate.Data(:,1));
 xlabel('Time [t]');
 ylabel('Angle');
 grid on;
-title('Roll rate');
+title('Roll rate','predictedRoll_rate');
 
 % Steer angle and rate
 figure();
 subplot(2,1,1)
-plot(Results.steer_angle.Time(:,1),Results.steer_angle.Data(:,1)) 
+plot(Results.steer_angle.Time(:,1),Results.steer_angle.Data(:,1))
+% hold on;
+% plot(Results.predictedRoll_rate.Time(:,1),Results.predictedRoll_rate.Data(:,1));
 xlabel('Time')
 ylabel('Angle')
+legend('steer_angle','predictedSteer_angle')
 title('Steer angle')
 subplot(2,1,2)
 plot(Results.steer_rate.Time(:,1),Results.steer_rate.Data(:,1))
