@@ -14,7 +14,7 @@ clc;
         g = 9.81;
 
     % Simulation time
-        sim_time = 95;
+        sim_time = 150;
 
     % Name of the model
         model = 'Main_v2';
@@ -122,7 +122,7 @@ e1_max=abs(-k2*e2_max/k1);% k1,k2 has been known, so we can calculate e1_max
 
 %% Reference trajectory generation
 
-Ts_ref = Ts; % Sampling time for reference generation
+Ts_ref = 10*Ts; % Sampling time for reference generation
 N = 50; % # of reference points
 scale = 100; % only for infinite and circle
 
@@ -189,8 +189,6 @@ grid on;
 title('Y-coordinate');
 subplot(3,1,3)
 plot(Results.refPsi.Time(:,1),Results.refPsi.Data(:,1));
-hold on;
-plot(Results.truePsi.Time(:,1),Results.truePsi.Data(:,1));
 hold on;
 plot(Results.truePsi.Time(:,1),Results.truePsi.Data(:,1));
 legend('Psiref','truePsi');

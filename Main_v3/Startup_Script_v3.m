@@ -14,16 +14,13 @@ clc;
         g = 9.81;
 
     % Simulation time
-        sim_time = 150;
+        sim_time = 200;
 
     % Name of the model
-        model = 'Main_v2';
+        model = 'Main_v3';
 
     % Sampling Time
         Ts = 0.01; 
-
-    % Horizon time
-        Th = 0.02;
 
 % Initial states
 
@@ -58,7 +55,7 @@ clc;
 %% Disturbance Model
 
 % Roll Reference  
-roll_ref_generation;%long time ago left by other students, it's helpless now but keep it
+roll_ref_generation; %long time ago left by other students, it's helpless now but keep it
 
 % Steering Rate State Perturbation
 pert_deltadot_state = 0; % Switch ON (1) / OFF (0) the perturbation
@@ -122,20 +119,20 @@ e1_max=abs(-k2*e2_max/k1);% k1,k2 has been known, so we can calculate e1_max
 
 %% Reference trajectory generation
 
-Ts_ref = 10*Ts; % Sampling time for reference generation
-N = 50; % # of reference points
-scale = 100; % only for infinite and circle
-
 % options: sharp_turn, line, infinite, circle, ascent_sin, smooth_curve
 type = 'infinite';
 
-[Xref,Yref,Psiref] = ReferenceGenerator(type,Ts_ref,N,scale);
+Ts_ref = 10*Ts; % Sampling time for reference generation
+N = 500; % # of reference points
+scale = 50; % only for infinite and circle
+
+% All reference points will be generated below
+[Xref,Yref,Psiref] = ReferenceGenerator_v3(type,Ts_ref,N,scale);
 test_curve=[Xref,Yref,Psiref];
-Nn = size(test_curve,1); % needed for simulink
 
-%% Warnings
+%% Reference warnings and update initial pose
 
-initial_pose_new = referenceTest(test_curve,Th,Ts,initial_pose);
+initial_pose_new = referenceTest_v3(test_curve,initial_pose);
 initial_state.x = initial_pose_new(1);
 initial_state.y = initial_pose_new(2);
 initial_state.heading = initial_pose_new(3);
@@ -150,17 +147,45 @@ end
 toc
 
 %% Messages
+%Due to singularity, the last index of the reference should not be detected
+%so the simulation will be aborted before that. This is a temporary
+%solution.
 if Results.stop.Data(end) == 1
-    disp('Message: End of the trajectory has been reached');
+    disp('Message: Simulation aborted because the end was approached');
 end
+
+%Warns for sharp turns which are hard to reach for the bike 
+%it warns when a turn of >90 will be made within ts/v
+
+%Determine amount of datapoints which should be added
+%Include dpsiref in this matlab script
+%
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+turn_distance = 0;
+max_turn = pi/6;
+index = 0;
+
+for i = 1:1:length(Results.dpsiref.Data)-turn_distance
+tot_dpsiref = sum(Results.dpsiref.Data(i:i+turn_distance));
+if tot_dpsiref >= max_turn   
+    index = [index i];
+end
+end
+if length(index) ~= 1
+disp('Message: An unrealistic sharp turn has been detected, index: ');
+disp(index(2:end))
+end
+
 
 %% Ploting
 
 % Trajectory
 figure();
-plot(Xref,Yref);
 hold on;
+plot(Xref,Yref,'b--o');
 plot(Results.trueX.Data(:,1),Results.trueY.Data(:,1));
+plot(Xref(Results.idx.Data(end)),Yref(Results.idx.Data(end)),'g--o')
 legend('Ref','true');
 xlabel('X-dir');
 ylabel('Y-dir');
@@ -188,9 +213,7 @@ ylabel('Position Y [m]');
 grid on;
 title('Y-coordinate');
 subplot(3,1,3)
-plot(Results.refPsi.Time(:,1),Results.refPsi.Data(:,1));
-hold on;
-plot(Results.truePsi.Time(:,1),Results.truePsi.Data(:,1));
+plot(Results.refpsi.Time(:,1),Results.refpsi.Data(:,1));
 hold on;
 plot(Results.truePsi.Time(:,1),Results.truePsi.Data(:,1));
 legend('Psiref','truePsi');
@@ -233,10 +256,8 @@ title('Steer rate')
 % Ids and closest point index
 figure();
 hold on
-plot(Results.closest_point.Data)
-plot(Results.ids.Data)
-title('Closes+ids')
-legend('Closest index', 'ids')
+plot(Results.idx.Data)
+title('Closest point index')
 
 % Lateral and heading errors
 figure();
