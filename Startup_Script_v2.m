@@ -14,7 +14,7 @@ clc;
         g = 9.81;
 
     % Simulation time
-        sim_time = 2;
+        sim_time = 2.5;
 
     % Name of the model
         model = 'Main_v2';
@@ -23,7 +23,7 @@ clc;
         Ts = 0.01; 
 
     % Horizon time
-        Th = 5;
+        Th = 0.02;
 
 % Initial states
 
@@ -122,12 +122,12 @@ e1_max=abs(-k2*e2_max/k1);% k1,k2 has been known, so we can calculate e1_max
 
 %% Reference trajectory generation
 
-Ts_ref = Ts; % Sampling time for reference generation
-N = 500; % # of reference points
+Ts_ref = 10*Ts; % Sampling time for reference generation
+N = 2100; % # of reference points
 scale = 100; % only for infinite and circle
 
 % options: sharp_turn, line, infinite, circle, ascent_sin, smooth_curve
-type = 'infinite';
+type = 'ascent_sin';
 
 [Xref,Yref,Psiref] = ReferenceGenerator(type,Ts_ref,N,scale);
 test_curve=[Xref,Yref,Psiref];
@@ -135,11 +135,12 @@ Nn = size(test_curve,1); % needed for simulink
 
 %% Warnings
 
-initial_pose_new = referenceTest(test_curve,Th,Ts,initial_pose,v);
+initial_pose_new = referenceTest(test_curve,Th,Ts,initial_pose);
 initial_state.x = initial_pose_new(1);
 initial_state.y = initial_pose_new(2);
 initial_state.heading = initial_pose_new(3);
 initial_pose = [initial_state.x; initial_state.y; initial_state.heading];
+initial_state_estimate = initial_state;
 
 %% Start the Simulation
 
@@ -158,7 +159,7 @@ end
 
 % Trajectory
 figure();
-plot(Xref,Yref,'b--o');
+plot(Xref,Yref);
 hold on;
 plot(Results.trueX.Data(:,1),Results.trueY.Data(:,1));
 hold on;
@@ -223,19 +224,21 @@ plot(Results.trueRoll_rate.Time(:,1),Results.trueRoll_rate.Data(:,1));
 hold on;
 plot(Results.predictedRoll_rate.Time(:,1),Results.predictedRoll_rate.Data(:,1));
 xlabel('Time [t]');
-ylabel('Angle');
+ylabel('Angle rate');
 grid on;
-title('Roll rate','predictedRoll_rate');
+legend('trueRoll rate','predictedRoll_rate');
 
 % Steer angle and rate
 figure();
 subplot(2,1,1)
-plot(Results.steer_angle.Time(:,1),Results.steer_angle.Data(:,1))
+plot(Results.refSteer_angle.Time(:,1),Results.refSteer_angle.Data(:,1))
 hold on;
-plot(Results.predictedRoll_rate.Time(:,1),Results.predictedSteer_angle.Data(:,1));
+plot(Results.trueSteer_angle.Time(:,1),Results.trueSteer_angle.Data(:,1)*sin(bike_params.lambda));
+hold on;
+plot(Results.predictedSteer_angle.Time(:,1),Results.predictedSteer_angle.Data(:,1));
 xlabel('Time')
 ylabel('Angle')
-legend('steer_angle','predictedSteer_angle')
+legend('refSteer_angle','trueSteer_angle_e','predictedSteer_angle_e')
 title('Steer angle')
 subplot(2,1,2)
 plot(Results.steer_rate.Time(:,1),Results.steer_rate.Data(:,1))
