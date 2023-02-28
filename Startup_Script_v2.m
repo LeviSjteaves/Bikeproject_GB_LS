@@ -14,7 +14,7 @@ clc;
         g = 9.81;
 
     % Simulation time
-        sim_time = 2.5;
+        sim_time = 3;
 
     % Name of the model
         model = 'Main_v2';
@@ -23,7 +23,7 @@ clc;
         Ts = 0.01; 
 
     % Horizon time
-        Th = 0.02;
+        Th = 2;
 
 % Initial states
 
@@ -122,12 +122,12 @@ e1_max=abs(-k2*e2_max/k1);% k1,k2 has been known, so we can calculate e1_max
 
 %% Reference trajectory generation
 
-Ts_ref = 10*Ts; % Sampling time for reference generation
-N = 2100; % # of reference points
+Ts_ref = Ts; % Sampling time for reference generation
+N = 200; % # of reference points
 scale = 100; % only for infinite and circle
 
 % options: sharp_turn, line, infinite, circle, ascent_sin, smooth_curve
-type = 'ascent_sin';
+type = 'infinite';
 
 [Xref,Yref,Psiref] = ReferenceGenerator(type,Ts_ref,N,scale);
 test_curve=[Xref,Yref,Psiref];
@@ -135,12 +135,44 @@ Nn = size(test_curve,1); % needed for simulink
 
 %% Warnings
 
-initial_pose_new = referenceTest(test_curve,Th,Ts,initial_pose);
+initial_pose_new = referenceTest(test_curve,Th,Ts,initial_pose,v);
 initial_state.x = initial_pose_new(1);
 initial_state.y = initial_pose_new(2);
 initial_state.heading = initial_pose_new(3);
 initial_pose = [initial_state.x; initial_state.y; initial_state.heading];
 initial_state_estimate = initial_state;
+
+%% Kalman Filter
+
+% Unpacked bike_params
+h = bike_params.h;
+b = bike_params.b;
+a = bike_params.a;
+lambda = bike_params.lambda;
+c = bike_params.c;
+m = bike_params.m;
+
+% Notations of simulink
+lr = bike_params.b; % distance from rear wheel center to center of mass
+lf = bike_params.b-bike_params.a; % distance from front wheen center to center of mass
+
+% A matrix (linear bicycle model with constant velocity)
+A = [0 0 0 0 0 0 v;
+     0 0 v 0 0 (lr/(lf+lr)) 0;
+     0 0 0 0 0 (v/(lr+lf)) 0;
+     0 0 0 0 1 0 0;
+     0 0 0 (g/h) ((v^2*h-lr*g*c)/(h*(lr+lf))) 0 0;
+     0 0 0 0 0 0 0;
+     0 0 0 0 0 0 0];
+
+% B matrix (linear bicycle model with constant velocity)
+B = [0 0 0 0 ((lr*v)/(h^2*(lr+lf))) 1 0]';
+
+% Q and R matrix
+Q = eye(7);
+R = 1;
+
+[P,Kalman_gain] = idare(A,B,Q,R,[],[]);
 
 %% Start the Simulation
 
@@ -160,13 +192,14 @@ end
 % Trajectory
 figure();
 plot(Xref,Yref);
+ylim([-50 50])
+xlim([-100 100])
 hold on;
 plot(Results.trueX.Data(:,1),Results.trueY.Data(:,1));
-hold on;
 plot(Results.predictedX.Data(:,1),Results.predictedY.Data(:,1));
 legend('Ref','true','predicted');
-xlabel('X-dir');
-ylabel('Y-dir');
+xlabel('X-dir [m]');
+ylabel('Y-dir [m]');
 grid on;
 title('Trajectory');
 
@@ -176,7 +209,6 @@ subplot(3,1,1)
 plot(Results.refX.Time(:,1),Results.refX.Data(:,1));
 hold on;
 plot(Results.trueX.Time(:,1),Results.trueX.Data(:,1));
-hold on;
 plot(Results.predictedX.Time(:,1),Results.predictedX.Data(:,1));
 legend('Xref','trueX','predictedX');
 xlabel('Time [t]');
@@ -187,7 +219,6 @@ subplot(3,1,2);
 plot(Results.refY.Time(:,1),Results.refY.Data(:,1));
 hold on;
 plot(Results.trueY.Time(:,1),Results.trueY.Data(:,1));
-hold on;
 plot(Results.predictedY.Time(:,1),Results.predictedY.Data(:,1));
 legend('Yref','trueY','predictedY');
 xlabel('Time [t]');
@@ -198,11 +229,10 @@ subplot(3,1,3)
 plot(Results.refPsi.Time(:,1),Results.refPsi.Data(:,1));
 hold on;
 plot(Results.truePsi.Time(:,1),Results.truePsi.Data(:,1));
-hold on;
 plot(Results.predictedPsi.Time(:,1),Results.predictedPsi.Data(:,1));
 legend('Psiref','truePsi','predictedPsi');
 xlabel('Time [t]');
-ylabel('Angle');
+ylabel('Angle [rad]');
 grid on;
 title('Heading');
 
@@ -212,21 +242,23 @@ subplot(2,1,1)
 plot(Results.refRoll.Time(:,1),Results.refRoll.Data(:,1));
 hold on;
 plot(Results.trueRoll.Time(:,1),Results.trueRoll.Data(:,1));
-hold on;
 plot(Results.predictedRoll.Time(:,1),Results.predictedRoll.Data(:,1));
+ylim([-3 3])
 legend('Rollref','trueRoll','predictedRoll');
 xlabel('Time [t]');
-ylabel('Angle');
+ylabel('Angle [rad]');
 grid on;
 title('Roll');
 subplot(2,1,2)
 plot(Results.trueRoll_rate.Time(:,1),Results.trueRoll_rate.Data(:,1));
-hold on;
+hold on
 plot(Results.predictedRoll_rate.Time(:,1),Results.predictedRoll_rate.Data(:,1));
+ylim([-3 3])
 xlabel('Time [t]');
-ylabel('Angle rate');
+ylabel('Angle rate [rad/s]');
 grid on;
-legend('trueRoll rate','predictedRoll_rate');
+title('Rollrate')
+legend('trueRoll rate','predictedRoll rate');
 
 % Steer angle and rate
 figure();
@@ -234,16 +266,15 @@ subplot(2,1,1)
 plot(Results.refSteer_angle.Time(:,1),Results.refSteer_angle.Data(:,1))
 hold on;
 plot(Results.trueSteer_angle.Time(:,1),Results.trueSteer_angle.Data(:,1)*sin(bike_params.lambda));
-hold on;
 plot(Results.predictedSteer_angle.Time(:,1),Results.predictedSteer_angle.Data(:,1));
-xlabel('Time')
-ylabel('Angle')
-legend('refSteer_angle','trueSteer_angle_e','predictedSteer_angle_e')
+xlabel('Time [t]')
+ylabel('Angle [rad]')
+legend('refSteer angle','trueSteer angle e','predictedSteer angle e')
 title('Steer angle')
 subplot(2,1,2)
 plot(Results.steer_rate.Time(:,1),Results.steer_rate.Data(:,1))
 xlabel('Time [t]')
-ylabel('Angle/s')
+ylabel('Angle [rad/s]')
 title('Steer rate')
 
 % Ids and closest point index
@@ -253,6 +284,8 @@ plot(Results.closest_point.Data)
 plot(Results.ids.Data)
 title('Closes+ids')
 legend('Closest index', 'ids')
+xlabel('Iteration [-]')
+ylabel('Index [-]')
 
 % Lateral and heading errors
 figure();
@@ -263,8 +296,8 @@ ylabel('Distance [m]')
 title('Lateral error')
 subplot(1,2,2)
 plot(Results.error1.Time,Results.error1.Data)
-xlabel('Iteration')
-ylabel('Degree')
+xlabel('Iteration [-]')
+ylabel('Angle [rad]')
 title('Heading error')
 
 %% Utility Functions
