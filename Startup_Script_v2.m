@@ -14,7 +14,7 @@ clc;
         g = 9.81;
 
     % Simulation time
-        sim_time = 3;
+        sim_time = 100;
 
     % Name of the model
         model = 'Main_v2';
@@ -122,12 +122,12 @@ e1_max=abs(-k2*e2_max/k1);% k1,k2 has been known, so we can calculate e1_max
 
 %% Reference trajectory generation
 
-Ts_ref = Ts; % Sampling time for reference generation
-N = 200; % # of reference points
+Ts_ref = 2*Ts; % Sampling time for reference generation
+N = 100; % # of reference points
 scale = 100; % only for infinite and circle
 
 % options: sharp_turn, line, infinite, circle, ascent_sin, smooth_curve
-type = 'infinite';
+type = 'smooth_curve';
 
 [Xref,Yref,Psiref] = ReferenceGenerator(type,Ts_ref,N,scale);
 test_curve=[Xref,Yref,Psiref];
@@ -168,11 +168,21 @@ A = [0 0 0 0 0 0 v;
 % B matrix (linear bicycle model with constant velocity)
 B = [0 0 0 0 ((lr*v)/(h^2*(lr+lf))) 1 0]';
 
+% C and D matrix (measurement model)
+C = eye(7);
+D = zeros(7,1);
+
+% Transform to ss
+sys = ss(A,B,C,D);
+
 % Q and R matrix
 Q = eye(7);
 R = 1;
 
 [P,Kalman_gain] = idare(A,B,Q,R,[],[]);
+% [kalmf, Kalman_gain, P] = kalman(sys,0,0,0);
+
+
 
 %% Start the Simulation
 
