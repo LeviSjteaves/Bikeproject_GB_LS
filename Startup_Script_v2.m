@@ -12,36 +12,16 @@ clc;
 
     % Gravitational Acceleration
         g = 9.81;
-
-    % Simulation time
-        sim_time = 100;
-
     % Name of the model
         model = 'Main_v2';
-
+    % Simulation time
+        sim_time = 200;
     % Sampling Time
         Ts = 0.01; 
-
-    % Horizon time
-        Th = 2;
-
-% Initial states
-
-    % Initial Roll
-        initial_state.roll = deg2rad(0);
-        initial_state.roll_rate = deg2rad(0);
-
-    % Initial Steering
-        initial_state.steering = deg2rad(0);
-
-    % Initial Pose (X,Y,\theta)
-        initial_state.x = 0;
-        initial_state.y = 0;
-        initial_state.heading = deg2rad(0);
-        initial_pose = [initial_state.x; initial_state.y; initial_state.heading];
-
-% Constant Speed [m/s]
-    v = 3;    
+    % Horizon distance [m]
+        hor_dis = 1;
+    % Constant Speed [m/s]
+        v = 3;    
 
 % Open the Simulink Model
     open([model '.slx']);
@@ -49,24 +29,63 @@ clc;
     set_param(model,'AlgebraicLoopSolver','TrustRegion');
 % Choose The Bike - Options: 'red' or 'black'
     bike = 'black';
-% bike model
-    bike_model = 1; % 1 = non-linear model || 2 = linear model
-
 % Load the parameters of the specified bicycle
     bike_params = LoadBikeParameters(bike); 
+% bike model
+    bike_model = 1; % 1 = non-linear model || 2 = linear model
+% Run all test cases
+    Run_tests = 0; % 0 = Don't run test cases || 1 = run test cases
+
+% Initial states
+
+% Initial Roll
+        initial_state.roll = deg2rad(0);
+        initial_state.roll_rate = deg2rad(0);
+% Initial Steering
+        initial_state.steering = deg2rad(0);
+% Initial Pose (X,Y,\theta)
+        initial_state.x = 0;
+        initial_state.y = 0;
+        initial_state.heading = deg2rad(0);
+        initial_pose = [initial_state.x; initial_state.y; initial_state.heading];
+
+%% Reference trajectory generation
+
+% SHAPE options: sharp_turn, line, infinite, circle, ascent_sin, smooth_curve
+type = 'infinite';
+% Distance between points [m]
+ref_dis = 0.05;
+% Number# of reference points
+N = 150; 
+% Scale (only for infinite and circle)
+scale = 100; 
+
+[Xref,Yref,Psiref] = ReferenceGenerator(type,ref_dis,N,scale);
+test_curve=[Xref,Yref,Psiref];
+Nn = size(test_curve,1); % needed for simulink
+
+%% Reference test (warnings and initialization update)
+Output_reference_test = referenceTest(test_curve,hor_dis,Ts,initial_pose,v);
+
+%update initial states if offset is detected
+initial_state.x = Output_reference_test(1);
+initial_state.y = Output_reference_test(2);
+initial_state.heading = Output_reference_test(3);
+initial_pose = [initial_state.x; initial_state.y; initial_state.heading];
+initial_state_estimate = initial_state;
 
 %% Disturbance Model
-
-% Roll Reference  
-roll_ref_generation;%long time ago left by other students, it's helpless now but keep it
-
-% Steering Rate State Perturbation
-pert_deltadot_state = 0; % Switch ON (1) / OFF (0) the perturbation
-pert_deltadot_state_fun = @(time)  -0.5*(time>10) && (ceil(mod(time/3,2)) == 1) &&(time<30);
-
-% Roll Rate State Perturbation
-pert_phidot_state = 0; % Switch ON (1) / OFF (0) the perturbation
-pert_phidot_state_fun = @(time) cos(time)*(time>10 && time < 10.4);
+% 
+% % Roll Reference  
+% roll_ref_generation;%long time ago left by other students, it's helpless now but keep it
+% 
+% % Steering Rate State Perturbation
+% pert_deltadot_state = 0; % Switch ON (1) / OFF (0) the perturbation
+% pert_deltadot_state_fun = @(time)  -0.5*(time>10) && (ceil(mod(time/3,2)) == 1) &&(time<30);
+% 
+% % Roll Rate State Perturbation
+% pert_phidot_state = 0; % Switch ON (1) / OFF (0) the perturbation
+% pert_phidot_state_fun = @(time) cos(time)*(time>10 && time < 10.4);
 
 %% Bike State-Space Model
 
@@ -120,28 +139,6 @@ B_con=[bike_params.a*v/bike_params.b;v/bike_params.b];
 e2_max=deg2rad(30);%Here is the e2_max we used to calculate e1_max
 e1_max=abs(-k2*e2_max/k1);% k1,k2 has been known, so we can calculate e1_max
 
-%% Reference trajectory generation
-
-Ts_ref = 2*Ts; % Sampling time for reference generation
-N = 100; % # of reference points
-scale = 100; % only for infinite and circle
-
-% options: sharp_turn, line, infinite, circle, ascent_sin, smooth_curve
-type = 'smooth_curve';
-
-[Xref,Yref,Psiref] = ReferenceGenerator(type,Ts_ref,N,scale);
-test_curve=[Xref,Yref,Psiref];
-Nn = size(test_curve,1); % needed for simulink
-
-%% Warnings
-
-initial_pose_new = referenceTest(test_curve,Th,Ts,initial_pose,v);
-initial_state.x = initial_pose_new(1);
-initial_state.y = initial_pose_new(2);
-initial_state.heading = initial_pose_new(3);
-initial_pose = [initial_state.x; initial_state.y; initial_state.heading];
-initial_state_estimate = initial_state;
-
 %% Kalman Filter
 
 % Unpacked bike_params
@@ -183,8 +180,8 @@ R = 1;
 % [kalmf, Kalman_gain, P] = kalman(sys,0,0,0);
 
 
-
 %% Start the Simulation
+if Run_tests == 0
 
 tic
 try Results = sim(model);
@@ -192,7 +189,7 @@ try Results = sim(model);
 end
 toc
 
-%% Messages
+%% Simulation Messages and Warnings
 if Results.stop.Data(end) == 1
     disp('Message: End of the trajectory has been reached');
 end
@@ -201,90 +198,111 @@ end
 
 % Trajectory
 figure();
-plot(Xref,Yref);
-ylim([-50 50])
-xlim([-100 100])
 hold on;
+plot(Xref,Yref);
 plot(Results.trueX.Data(:,1),Results.trueY.Data(:,1));
-plot(Results.predictedX.Data(:,1),Results.predictedY.Data(:,1));
+% plot(Results.predictedX.Data(:,1),Results.predictedY.Data(:,1));
 legend('Ref','true','predicted');
 xlabel('X-dir [m]');
 ylabel('Y-dir [m]');
+% ylim([-50 50])
+% xlim([-100 100])
 grid on;
 title('Trajectory');
 
 % X, Y, Psi
 figure();
+
 subplot(3,1,1)
-plot(Results.refX.Time(:,1),Results.refX.Data(:,1));
 hold on;
+plot(Results.refX.Time(:,1),Results.refX.Data(:,1));
 plot(Results.trueX.Time(:,1),Results.trueX.Data(:,1));
-plot(Results.predictedX.Time(:,1),Results.predictedX.Data(:,1));
+% plot(Results.predictedX.Time(:,1),Results.predictedX.Data(:,1));
 legend('Xref','trueX','predictedX');
 xlabel('Time [t]');
 ylabel('Position X [m]');
+% ylim([-50 50])
+% xlim([-100 100])
 grid on;
 title('X-coordinate');
+
 subplot(3,1,2);
-plot(Results.refY.Time(:,1),Results.refY.Data(:,1));
 hold on;
-plot(Results.trueY.Time(:,1),Results.trueY.Data(:,1));
-plot(Results.predictedY.Time(:,1),Results.predictedY.Data(:,1));
+plot(Results.refY.Time(:,1),Results.refY.Data(:,1));                
+plot(Results.trueY.Time(:,1),Results.trueY.Data(:,1));              
+% plot(Results.predictedY.Time(:,1),Results.predictedY.Data(:,1));    
 legend('Yref','trueY','predictedY');
 xlabel('Time [t]');
 ylabel('Position Y [m]');
+% ylim([-50 50])
+% xlim([-100 100])
 grid on;
 title('Y-coordinate');
+
 subplot(3,1,3)
-plot(Results.refPsi.Time(:,1),Results.refPsi.Data(:,1));
 hold on;
+plot(Results.refPsi.Time(:,1),Results.refPsi.Data(:,1));
 plot(Results.truePsi.Time(:,1),Results.truePsi.Data(:,1));
-plot(Results.predictedPsi.Time(:,1),Results.predictedPsi.Data(:,1));
+% plot(Results.predictedPsi.Time(:,1),Results.predictedPsi.Data(:,1));
 legend('Psiref','truePsi','predictedPsi');
 xlabel('Time [t]');
 ylabel('Angle [rad]');
+% ylim([-50 50])
+% xlim([-100 100])
 grid on;
 title('Heading');
 
 % Roll and Roll_rate
 figure();
+
 subplot(2,1,1)
-plot(Results.refRoll.Time(:,1),Results.refRoll.Data(:,1));
 hold on;
+plot(Results.refRoll.Time(:,1),Results.refRoll.Data(:,1));
 plot(Results.trueRoll.Time(:,1),Results.trueRoll.Data(:,1));
-plot(Results.predictedRoll.Time(:,1),Results.predictedRoll.Data(:,1));
-ylim([-3 3])
+% plot(Results.predictedRoll.Time(:,1),Results.predictedRoll.Data(:,1));
 legend('Rollref','trueRoll','predictedRoll');
 xlabel('Time [t]');
 ylabel('Angle [rad]');
+ylim([-3 3])
+% xlim([-100 100])
 grid on;
 title('Roll');
+
 subplot(2,1,2)
-plot(Results.trueRoll_rate.Time(:,1),Results.trueRoll_rate.Data(:,1));
 hold on
-plot(Results.predictedRoll_rate.Time(:,1),Results.predictedRoll_rate.Data(:,1));
-ylim([-3 3])
+plot(Results.trueRoll_rate.Time(:,1),Results.trueRoll_rate.Data(:,1));
+% plot(Results.predictedRoll_rate.Time(:,1),Results.predictedRoll_rate.Data(:,1));
+legend('trueRoll rate','predictedRoll rate');
 xlabel('Time [t]');
 ylabel('Angle rate [rad/s]');
+ylim([-3 3])
+% xlim([0 0])
 grid on;
-title('Rollrate')
-legend('trueRoll rate','predictedRoll rate');
+title('Rollrate');
 
 % Steer angle and rate
 figure();
+
 subplot(2,1,1)
-plot(Results.refSteer_angle.Time(:,1),Results.refSteer_angle.Data(:,1))
 hold on;
+plot(Results.refSteer_angle.Time(:,1),Results.refSteer_angle.Data(:,1));
 plot(Results.trueSteer_angle.Time(:,1),Results.trueSteer_angle.Data(:,1)*sin(bike_params.lambda));
-plot(Results.predictedSteer_angle.Time(:,1),Results.predictedSteer_angle.Data(:,1));
+% plot(Results.predictedSteer_angle.Time(:,1),Results.predictedSteer_angle.Data(:,1));
+legend('refSteer angle','trueSteer angle e','predictedSteer angle e')
 xlabel('Time [t]')
 ylabel('Angle [rad]')
-legend('refSteer angle','trueSteer angle e','predictedSteer angle e')
+% ylim([-3 3])
+% xlim([0 0])
+grid on
 title('Steer angle')
+
 subplot(2,1,2)
 plot(Results.steer_rate.Time(:,1),Results.steer_rate.Data(:,1))
 xlabel('Time [t]')
 ylabel('Angle [rad/s]')
+% ylim([-3 3])
+% xlim([0 0])
+grid on
 title('Steer rate')
 
 % Ids and closest point index
@@ -292,27 +310,104 @@ figure();
 hold on
 plot(Results.closest_point.Data)
 plot(Results.ids.Data)
-title('Closes+ids')
 legend('Closest index', 'ids')
 xlabel('Iteration [-]')
 ylabel('Index [-]')
+% ylim([-3 3])
+% xlim([0 0])
+grid on
+title('Closes+ids')
 
 % Lateral and heading errors
 figure();
+
 subplot(1,2,1)
 plot(Results.error2.Time,Results.error2.Data) 
 xlabel('Iteration')
 ylabel('Distance [m]')
+grid on
 title('Lateral error')
+
 subplot(1,2,2)
 plot(Results.error1.Time,Results.error1.Data)
 xlabel('Iteration [-]')
 ylabel('Angle [rad]')
+grid on
 title('Heading error')
+
+end
+
+%% Test cases for validation
+
+if Run_tests == 1
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%Sparse infinite
+
+type = 'infinite';
+ref_dis = 0.22;
+N = 30; 
+scale = 100; 
+[Xref,Yref,Psiref] = ReferenceGenerator(type,ref_dis,N,scale);
+test_curve=[Xref,Yref,Psiref];
+Nn = size(test_curve,1); % needed for simulink
+
+try Results = sim(model);
+    catch error_details 
+end
+
+% Trajectory
+figure();
+hold on;
+plot(Xref,Yref);
+plot(Results.trueX.Data(:,1),Results.trueY.Data(:,1));
+% plot(Results.predictedX.Data(:,1),Results.predictedY.Data(:,1));
+legend('Ref','true','predicted');
+xlabel('X-dir [m]');
+ylabel('Y-dir [m]');
+% ylim([-50 50])
+% xlim([-100 100])
+grid on;
+title('Trajectory');
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%Large offset
+
+initial_state.x = Output_reference_test(1)-10;
+initial_state.y = Output_reference_test(2)-10;
+initial_state.heading = Output_reference_test(3)-pi;
+initial_pose = [initial_state.x; initial_state.y; initial_state.heading];
+
+try Results = sim(model);
+    catch error_details 
+end
+
+% Trajectory
+figure();
+hold on;
+plot(Xref,Yref);
+plot(Results.trueX.Data(:,1),Results.trueY.Data(:,1));
+% plot(Results.predictedX.Data(:,1),Results.predictedY.Data(:,1));
+legend('Ref','true','predicted');
+xlabel('X-dir [m]');
+ylabel('Y-dir [m]');
+% ylim([-50 50])
+% xlim([-100 100])
+grid on;
+title('Trajectory');
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
+%     %
+% try Results = sim(model);
+%     catch error_details 
+% end
+
+end
+
 
 %% Utility Functions
 
 function Parameters = LoadBikeParameters(bike)
+
     if strcmp(bike,'red')
         % Red bike
         Parameters.inertia_front = 0.245;  %[kg.m^2] inertia of the front wheel
@@ -338,5 +433,7 @@ function Parameters = LoadBikeParameters(bike)
         Parameters.uneven_mass = false;    % true = use uneven mass distribution in bike model ; 0 = do not use
     end
 end
+
+
 
 

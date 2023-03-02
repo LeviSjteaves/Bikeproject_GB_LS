@@ -38,7 +38,7 @@ function [initialization_new] = referenceTest(traj,Th,Ts,initialization,v)
        end
     end
     if length(index) ~= 1
-        disp('Warning: Too sharp turn during the trajectory, index: ')
+        disp('Warning: Sharp turn during the trajectory, index: ')
         disp(index(2:end))
     end
 
