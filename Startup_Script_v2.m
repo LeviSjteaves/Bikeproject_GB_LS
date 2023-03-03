@@ -154,24 +154,24 @@ lr = bike_params.b; % distance from rear wheel center to center of mass
 lf = bike_params.b-bike_params.a; % distance from front wheen center to center of mass
 
 % A matrix (linear bicycle model with constant velocity)
-A = [0 0 0 0 0 0 0;
+A = [0 0 0 0 0 0 1;
      0 0 v 0 0 v*(lr/(lf+lr)) 0;
      0 0 0 0 0 (v/(lr+lf)) 0;
      0 0 0 0 1 0 0;
-     0 0 0 (g/h) ((v^2*h-lr*g*c)/(h*(lr+lf))) 0 0;
+     0 0 0 (g/h) 0 ((v^2*h-lr*g*c)/(h*(lr+lf))) 0;
      0 0 0 0 0 0 0;
      0 0 0 0 0 0 0];
 
 % B matrix (linear bicycle model with constant velocity)
-B = [0 0 0 0 ((lr*v)/(h^2*(lr+lf))) 1 0;
-     1 0 0 0 0 0 0]';
+B = [0 0 0 0 ((lr*v)/(h^2*(lr+lf))) 1 0]';
 
 % C and D matrix (measurement model)
 C = eye(7);
-D = zeros(7,2);
+D = zeros(7,1);
 
-% Transform to discrete state space model
-sys = ss(A,B,C,D,Ts);
+% Transform to state space model
+sys = ss(A,B,C,D);   % continuous
+sys_d = ss(A,B,C,D,Ts); % discrete
 
 % Q and R matrix
 Q = eye(7);
@@ -181,25 +181,31 @@ P1 = eye(2);
 P2 = 1;
 N = 0;
 
-% check controllability and observability
-% S = ctrb(sys.A,sys.B);
+% check controllability and observability in continuous
+S = ctrb(sys.A,sys.B);
+kappa_c = cond(S); % condition number
+O = obsv(sys.A, sys.C);
+kappa_o = cond(O);
+
+% % check controllability and observability in discrete
+% S = ctrb(sys_d.A,sys_d.B);
 % kappa_c = cond(S); % condition number
-% O = obsv(sys.A, sys.C);
+% O = obsv(sys_d.A, sys_d.C);
 % kappa_o = cond(O);
 
 % idare
-[P,Kalman_gain1,eig] = idare(sys.A',sys.C',Q,R,[],[]);
+[P,Kalman_gain1,eig] = idare(sys_d.A',sys_d.C',Q,R,[],[]);
 Kalman_gain1 = Kalman_gain1';
 
-% [kalmf, Kalman_gain, P] = kalman(sys,P1,P2,N);
+% [kalmf, Kalman_gain, P] = kalman(sys_d,P1,P2,N);
 
 % dlqe
-[Kalman_gain2, P, Z,E] = dlqe(sys.A,eye(7),sys.C,Q,R);
-Kalman_gain2 = sys.A * Kalman_gain2;
+[Kalman_gain2, P, Z,E] = dlqe(sys_d.A,eye(7),sys_d.C,Q,R);
+Kalman_gain2 = sys_d.A * Kalman_gain2;
 
-%  eig(sys.A-sys.C(:,1)*Kalman_gain(1,:))
-%  eig(sys.A-sys.C(:,1)*Kalman_gain(:,:))
-% eig(sys.A-sys.C*Kalman_gain)
+%  eig(sys.A-sys_d.C(:,1)*Kalman_gain(1,:))
+%  eig(sys.A-sys_d.C(:,1)*Kalman_gain(:,:))
+% eig(sys.A-sys_d.C*Kalman_gain)
 
 
 %% Start the Simulation
