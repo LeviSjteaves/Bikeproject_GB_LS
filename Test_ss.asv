@@ -87,18 +87,15 @@ res_d3 = States_l + states_dot * Ts
 
 %% jjjsjj
 
-meas(1) = 100;
-meas(2) = 0;
-States(3) = pi/2;
+me
 
-meas_l = zeros(7,1);
-meas_l(1) = meas(1) * cos(States(3)) + meas(2) * sin(States(3))
-meas_l(2) = -meas(1) * sin(States(3)) + meas(2) * cos(States(3))
-% meas_l(3) = 0;        
-% meas_l(4) = meas(4);
-% meas_l(5) = meas(5);
-% meas_l(6) = meas(6);
-% meas_l(7) = meas(7);
+meas(1) = meas(1) * cos(States(3)) + meas(2) * sin(States(3));
+meas(2) = -meas(1) * sin(States(3)) + meas(2) * cos(States(3));
+meas(3) = 0;        
+meas(4) = meas(4);
+meas(5) = meas(5);
+meas(6) = meas(6);
+meas(7) = meas(7);
 
 
 

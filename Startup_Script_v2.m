@@ -15,7 +15,7 @@ clc;
     % Name of the model
         model = 'Main_v2';
     % Simulation time
-        sim_time = 200;
+        sim_time = 100;
     % Sampling Time
         Ts = 0.01; 
     % Horizon distance [m]
@@ -34,7 +34,7 @@ clc;
 % bike model
     bike_model = 1; % 1 = non-linear model || 2 = linear model
 % Run all test cases
-    Run_tests = 1; % 0 = Don't run test cases || 1 = run test cases
+    Run_tests = 0; % 0 = Don't run test cases || 1 = run test cases
 
 % Initial states
 
@@ -170,42 +170,23 @@ C = eye(7);
 D = zeros(7,1);
 
 % Transform to state space model
-sys = ss(A,B,C,D);   % continuous
-sys_d = ss(A,B,C,D,Ts); % discrete
+% sys = ss(A,B,C,D);   % continuous
+% sys_d = ss(A,B,C,D,Ts); % discrete
+A_d = (eye(size(A))+Ts*A);
 
 % Q and R matrix
 Q = eye(7);
 R = eye(7);
 
-P1 = eye(2);
-P2 = 1;
-N = 0;
-
-% check controllability and observability in continuous
-S = ctrb(sys.A,sys.B);
-kappa_c = cond(S); % condition number
-O = obsv(sys.A, sys.C);
-kappa_o = cond(O);
-
-% % check controllability and observability in discrete
-% S = ctrb(sys_d.A,sys_d.B);
-% kappa_c = cond(S); % condition number
-% O = obsv(sys_d.A, sys_d.C);
-% kappa_o = cond(O);
-
-% idare
-[P,Kalman_gain1,eig] = idare(sys_d.A',sys_d.C',Q,R,[],[]);
+% idare function
+[P1,Kalman_gain1,eig] = idare(A_d',C',Q,R,[],[]);
+eig = abs(eig);
 Kalman_gain1 = Kalman_gain1';
 
-% [kalmf, Kalman_gain, P] = kalman(sys_d,P1,P2,N);
+% dlqe function
+[Kalman_gain2, P2, Z,E] = dlqe(A_d,eye(7),C,Q,R);
+Kalman_gain2 = A_d * Kalman_gain2;
 
-% dlqe
-[Kalman_gain2, P, Z,E] = dlqe(sys_d.A,eye(7),sys_d.C,Q,R);
-Kalman_gain2 = sys_d.A * Kalman_gain2;
-
-%  eig(sys.A-sys_d.C(:,1)*Kalman_gain(1,:))
-%  eig(sys.A-sys_d.C(:,1)*Kalman_gain(:,:))
-% eig(sys.A-sys_d.C*Kalman_gain)
 
 
 %% Start the Simulation
@@ -229,7 +210,7 @@ figure();
 hold on;
 plot(Xref,Yref);
 plot(Results.trueX.Data(:,1),Results.trueY.Data(:,1));
-% plot(Results.predictedX.Data(:,1),Results.predictedY.Data(:,1));
+plot(Results.predictedX.Data(:,1),Results.predictedY.Data(:,1));
 legend('Ref','true','predicted');
 xlabel('X-dir [m]');
 ylabel('Y-dir [m]');
@@ -245,7 +226,7 @@ subplot(3,1,1)
 hold on;
 plot(Results.refX.Time(:,1),Results.refX.Data(:,1));
 plot(Results.trueX.Time(:,1),Results.trueX.Data(:,1));
-% plot(Results.predictedX.Time(:,1),Results.predictedX.Data(:,1));
+plot(Results.predictedX.Time(:,1),Results.predictedX.Data(:,1));
 legend('Xref','trueX','predictedX');
 xlabel('Time [t]');
 ylabel('Position X [m]');
@@ -258,7 +239,7 @@ subplot(3,1,2);
 hold on;
 plot(Results.refY.Time(:,1),Results.refY.Data(:,1));                
 plot(Results.trueY.Time(:,1),Results.trueY.Data(:,1));              
-% plot(Results.predictedY.Time(:,1),Results.predictedY.Data(:,1));    
+plot(Results.predictedY.Time(:,1),Results.predictedY.Data(:,1));    
 legend('Yref','trueY','predictedY');
 xlabel('Time [t]');
 ylabel('Position Y [m]');
@@ -271,7 +252,7 @@ subplot(3,1,3)
 hold on;
 plot(Results.refPsi.Time(:,1),Results.refPsi.Data(:,1));
 plot(Results.truePsi.Time(:,1),Results.truePsi.Data(:,1));
-% plot(Results.predictedPsi.Time(:,1),Results.predictedPsi.Data(:,1));
+plot(Results.predictedPsi.Time(:,1),Results.predictedPsi.Data(:,1));
 legend('Psiref','truePsi','predictedPsi');
 xlabel('Time [t]');
 ylabel('Angle [rad]');
@@ -287,7 +268,7 @@ subplot(2,1,1)
 hold on;
 plot(Results.refRoll.Time(:,1),Results.refRoll.Data(:,1));
 plot(Results.trueRoll.Time(:,1),Results.trueRoll.Data(:,1));
-% plot(Results.predictedRoll.Time(:,1),Results.predictedRoll.Data(:,1));
+plot(Results.predictedRoll.Time(:,1),Results.predictedRoll.Data(:,1));
 legend('Rollref','trueRoll','predictedRoll');
 xlabel('Time [t]');
 ylabel('Angle [rad]');
@@ -299,7 +280,7 @@ title('Roll');
 subplot(2,1,2)
 hold on
 plot(Results.trueRoll_rate.Time(:,1),Results.trueRoll_rate.Data(:,1));
-% plot(Results.predictedRoll_rate.Time(:,1),Results.predictedRoll_rate.Data(:,1));
+plot(Results.predictedRoll_rate.Time(:,1),Results.predictedRoll_rate.Data(:,1));
 legend('trueRoll rate','predictedRoll rate');
 xlabel('Time [t]');
 ylabel('Angle rate [rad/s]');
@@ -315,7 +296,7 @@ subplot(2,1,1)
 hold on;
 plot(Results.refSteer_angle.Time(:,1),Results.refSteer_angle.Data(:,1));
 plot(Results.trueSteer_angle.Time(:,1),Results.trueSteer_angle.Data(:,1)*sin(bike_params.lambda));
-% plot(Results.predictedSteer_angle.Time(:,1),Results.predictedSteer_angle.Data(:,1));
+plot(Results.predictedSteer_angle.Time(:,1),Results.predictedSteer_angle.Data(:,1));
 legend('refSteer angle','trueSteer angle e','predictedSteer angle e')
 xlabel('Time [t]')
 ylabel('Angle [rad]')
