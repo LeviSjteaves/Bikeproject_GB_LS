@@ -34,7 +34,7 @@ clc;
 % bike model
     bike_model = 1; % 1 = non-linear model || 2 = linear model
 % Run all test cases
-    Run_tests = 0; % 0 = Don't run test cases || 1 = run test cases
+    Run_tests = 1; % 0 = Don't run test cases || 1 = run test cases
 
 % Initial states
 
@@ -65,7 +65,7 @@ test_curve=[Xref,Yref,Psiref];
 Nn = size(test_curve,1); % needed for simulink
 
 %% Reference test (warnings and initialization update)
-Output_reference_test = referenceTest(test_curve,hor_dis,Ts,initial_pose,v);
+Output_reference_test = referenceTest(test_curve,hor_dis,Ts,initial_pose,v, ref_dis);
 
 %update initial states if offset is detected
 initial_state.x = Output_reference_test(1);
@@ -154,8 +154,8 @@ lr = bike_params.b; % distance from rear wheel center to center of mass
 lf = bike_params.b-bike_params.a; % distance from front wheen center to center of mass
 
 % A matrix (linear bicycle model with constant velocity)
-A = [0 0 0 0 0 0 v;
-     0 0 v 0 0 (lr/(lf+lr)) 0;
+A = [0 0 0 0 0 0 0;
+     0 0 v 0 0 v*(lr/(lf+lr)) 0;
      0 0 0 0 0 (v/(lr+lf)) 0;
      0 0 0 0 1 0 0;
      0 0 0 (g/h) ((v^2*h-lr*g*c)/(h*(lr+lf))) 0 0;
@@ -163,21 +163,43 @@ A = [0 0 0 0 0 0 v;
      0 0 0 0 0 0 0];
 
 % B matrix (linear bicycle model with constant velocity)
-B = [0 0 0 0 ((lr*v)/(h^2*(lr+lf))) 1 0]';
+B = [0 0 0 0 ((lr*v)/(h^2*(lr+lf))) 1 0;
+     1 0 0 0 0 0 0]';
 
 % C and D matrix (measurement model)
 C = eye(7);
-D = zeros(7,1);
+D = zeros(7,2);
 
-% Transform to ss
-sys = ss(A,B,C,D);
+% Transform to discrete state space model
+sys = ss(A,B,C,D,Ts);
 
 % Q and R matrix
 Q = eye(7);
-R = 1;
+R = eye(7);
 
-[P,Kalman_gain] = idare(A,B,Q,R,[],[]);
-% [kalmf, Kalman_gain, P] = kalman(sys,0,0,0);
+P1 = eye(2);
+P2 = 1;
+N = 0;
+
+% check controllability and observability
+% S = ctrb(sys.A,sys.B);
+% kappa_c = cond(S); % condition number
+% O = obsv(sys.A, sys.C);
+% kappa_o = cond(O);
+
+% idare
+[P,Kalman_gain1,eig] = idare(sys.A',sys.C',Q,R,[],[]);
+Kalman_gain1 = Kalman_gain1';
+
+% [kalmf, Kalman_gain, P] = kalman(sys,P1,P2,N);
+
+% dlqe
+[Kalman_gain2, P, Z,E] = dlqe(sys.A,eye(7),sys.C,Q,R);
+Kalman_gain2 = sys.A * Kalman_gain2;
+
+%  eig(sys.A-sys.C(:,1)*Kalman_gain(1,:))
+%  eig(sys.A-sys.C(:,1)*Kalman_gain(:,:))
+% eig(sys.A-sys.C*Kalman_gain)
 
 
 %% Start the Simulation
@@ -342,61 +364,135 @@ end
 if Run_tests == 1
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%Sparse infinite
+%TEST CASE 1 Sparse infinite
+disp('Test case 1: Sparse infinite')
 
 type = 'infinite';
-ref_dis = 0.22;
-N = 30; 
+ref_dis = 0.5;
+N = 15; 
 scale = 100; 
 [Xref,Yref,Psiref] = ReferenceGenerator(type,ref_dis,N,scale);
 test_curve=[Xref,Yref,Psiref];
 Nn = size(test_curve,1); % needed for simulink
 
+%test reference
+Output_reference_test = referenceTest(test_curve,hor_dis,Ts,initial_pose,v,ref_dis);
+
 try Results = sim(model);
     catch error_details 
 end
+% Simulation Messages and Warnings
+if Results.stop.Data(end) == 1
+    disp('Message: End of the trajectory has been reached');
+end
 
 % Trajectory
+figure()
+plot(Results.refPsi.Time,Results.refPsi.Data(:,1))
 figure();
+subplot(3,2,[1,3,5]);
 hold on;
-plot(Xref,Yref);
-plot(Results.trueX.Data(:,1),Results.trueY.Data(:,1));
+plot3(Xref,Yref,1:length(Xref));
+plot3(Results.trueX.Data(:,1),Results.trueY.Data(:,1),Results.trueY.Time(:,1));
+view(0,90)
 % plot(Results.predictedX.Data(:,1),Results.predictedY.Data(:,1));
-legend('Ref','true','predicted');
+legend('Ref','true');
 xlabel('X-dir [m]');
 ylabel('Y-dir [m]');
-% ylim([-50 50])
-% xlim([-100 100])
 grid on;
 title('Trajectory');
+
+subplot(3,2,2)
+plot(Results.error2.Time,Results.error2.Data) 
+xlabel('Iteration')
+ylabel('Distance [m]')
+grid on
+title('Lateral error')
+
+subplot(3,2,4)
+plot(Results.error1.Time,Results.error1.Data)
+xlabel('Iteration [-]')
+ylabel('Angle [rad]')
+grid on
+title('Heading error')
+
+subplot(3,2,6)
+hold on
+plot(Results.closest_point.Time,Results.closest_point.Data)
+plot(Results.ids.Time,Results.ids.Data)
+legend('Closest index', 'ids')
+xlabel('Iteration [-]')
+ylabel('Index [-]')
+grid on
+title('Closes+ids')
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%Large offset
-
-initial_state.x = Output_reference_test(1)-10;
-initial_state.y = Output_reference_test(2)-10;
-initial_state.heading = Output_reference_test(3)-pi;
-initial_pose = [initial_state.x; initial_state.y; initial_state.heading];
-
-try Results = sim(model);
-    catch error_details 
-end
-
-% Trajectory
-figure();
-hold on;
-plot(Xref,Yref);
-plot(Results.trueX.Data(:,1),Results.trueY.Data(:,1));
-% plot(Results.predictedX.Data(:,1),Results.predictedY.Data(:,1));
-legend('Ref','true','predicted');
-xlabel('X-dir [m]');
-ylabel('Y-dir [m]');
-% ylim([-50 50])
-% xlim([-100 100])
-grid on;
-title('Trajectory');
+% %TEST CASE 2 Large offset X:-5 Y:0 PSI: 0
+% disp('Test case 2: Large offset')
+% 
+% type = 'line';
+% ref_dis = 0.1;
+% N = 1000; 
+% scale = 100; 
+% [Xref,Yref,Psiref] = ReferenceGenerator(type,ref_dis,N,scale);
+% test_curve=[Xref,Yref,Psiref];
+% Nn = size(test_curve,1); % needed for simulink
+% 
+% %test reference
+% Output_reference_test = referenceTest(test_curve,hor_dis,Ts,initial_pose,v,ref_dis);
+% initial_state.x = Output_reference_test(1);
+% initial_state.y = Output_reference_test(2)-5;
+% initial_state.heading = Output_reference_test(3);
+% initial_pose = [initial_state.x; initial_state.y; initial_state.heading];
+% 
+% try Results = sim(model);
+%     catch error_details 
+% end
+% % Simulation Messages and Warnings
+% if Results.stop.Data(end) == 1
+%     disp('Message: End of the trajectory has been reached');
+% end
+% 
+% % Trajectory
+% % Trajectory
+% figure();
+% subplot(3,2,[1,3,5]);
+% hold on;
+% plot3(Xref,Yref,1:length(Xref));
+% plot3(Results.trueX.Data(:,1),Results.trueY.Data(:,1),Results.trueY.Time(:,1));
+% view(0,90)
+% % plot(Results.predictedX.Data(:,1),Results.predictedY.Data(:,1));
+% legend('Ref','true');
+% xlabel('X-dir [m]');
+% ylabel('Y-dir [m]');
+% grid on;
+% title('Trajectory');
+% 
+% subplot(3,2,2)
+% plot(Results.error2.Time,Results.error2.Data) 
+% xlabel('Iteration')
+% ylabel('Distance [m]')
+% grid on
+% title('Lateral error')
+% 
+% subplot(3,2,4)
+% plot(Results.error1.Time,Results.error1.Data)
+% xlabel('Iteration [-]')
+% ylabel('Angle [rad]')
+% grid on
+% title('Heading error')
+% 
+% subplot(3,2,6)
+% hold on
+% plot(Results.closest_point.Time,Results.closest_point.Data)
+% plot(Results.ids.Time,Results.ids.Data)
+% legend('Closest index', 'ids')
+% xlabel('Iteration [-]')
+% ylabel('Index [-]')
+% grid on
+% title('Closes+ids')
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
-%     %
+%TEST CASE 3
 % try Results = sim(model);
 %     catch error_details 
 % end
