@@ -214,8 +214,8 @@ figure();
 hold on;
 plot(Xref,Yref);
 plot(Results.trueX.Data(:,1),Results.trueY.Data(:,1));
-plot(Results.predictedX.Data(:,1),Results.predictedY.Data(:,1));
-legend('Ref','true','predicted');
+plot(Results.estimatedX.Data(:,1),Results.estimatedY.Data(:,1));
+legend('Ref','true','estimated');
 xlabel('X-dir [m]');
 ylabel('Y-dir [m]');
 % ylim([-50 50])
@@ -230,8 +230,8 @@ subplot(3,1,1)
 hold on;
 plot(Results.refX.Time(:,1),Results.refX.Data(:,1));
 plot(Results.trueX.Time(:,1),Results.trueX.Data(:,1));
-plot(Results.predictedX.Time(:,1),Results.predictedX.Data(:,1));
-legend('Xref','trueX','predictedX');
+plot(Results.estimatedX.Time(:,1),Results.estimatedX.Data(:,1));
+legend('Xref','trueX','estimatedX');
 xlabel('Time [t]');
 ylabel('Position X [m]');
 % ylim([-50 50])
@@ -243,8 +243,8 @@ subplot(3,1,2);
 hold on;
 plot(Results.refY.Time(:,1),Results.refY.Data(:,1));                
 plot(Results.trueY.Time(:,1),Results.trueY.Data(:,1));              
-plot(Results.predictedY.Time(:,1),Results.predictedY.Data(:,1));    
-legend('Yref','trueY','predictedY');
+plot(Results.estimatedY.Time(:,1),Results.estimatedY.Data(:,1));    
+legend('Yref','trueY','estimatedY');
 xlabel('Time [t]');
 ylabel('Position Y [m]');
 % ylim([-50 50])
@@ -256,8 +256,8 @@ subplot(3,1,3)
 hold on;
 plot(Results.refPsi.Time(:,1),Results.refPsi.Data(:,1));
 plot(Results.truePsi.Time(:,1),Results.truePsi.Data(:,1));
-plot(Results.predictedPsi.Time(:,1),Results.predictedPsi.Data(:,1));
-legend('Psiref','truePsi','predictedPsi');
+plot(Results.estimatedPsi.Time(:,1),Results.estimatedPsi.Data(:,1));
+legend('Psiref','truePsi','estimatedPsi');
 xlabel('Time [t]');
 ylabel('Angle [rad]');
 % ylim([-50 50])
@@ -272,8 +272,8 @@ subplot(2,1,1)
 hold on;
 plot(Results.refRoll.Time(:,1),Results.refRoll.Data(:,1));
 plot(Results.trueRoll.Time(:,1),Results.trueRoll.Data(:,1));
-plot(Results.predictedRoll.Time(:,1),Results.predictedRoll.Data(:,1));
-legend('Rollref','trueRoll','predictedRoll');
+plot(Results.estimatedRoll.Time(:,1),Results.estimatedRoll.Data(:,1));
+legend('Rollref','trueRoll','estimatedRoll');
 xlabel('Time [t]');
 ylabel('Angle [rad]');
 ylim([-3 3])
@@ -284,8 +284,8 @@ title('Roll');
 subplot(2,1,2)
 hold on
 plot(Results.trueRoll_rate.Time(:,1),Results.trueRoll_rate.Data(:,1));
-plot(Results.predictedRoll_rate.Time(:,1),Results.predictedRoll_rate.Data(:,1));
-legend('trueRoll rate','predictedRoll rate');
+plot(Results.estimatedRoll_rate.Time(:,1),Results.estimatedRoll_rate.Data(:,1));
+legend('trueRoll rate','estimatedRoll rate');
 xlabel('Time [t]');
 ylabel('Angle rate [rad/s]');
 ylim([-3 3])
@@ -300,8 +300,8 @@ subplot(2,1,1)
 hold on;
 plot(Results.refSteer_angle.Time(:,1),Results.refSteer_angle.Data(:,1));
 plot(Results.trueSteer_angle.Time(:,1),Results.trueSteer_angle.Data(:,1)*sin(bike_params.lambda));
-plot(Results.predictedSteer_angle.Time(:,1),Results.predictedSteer_angle.Data(:,1));
-legend('refSteer angle','trueSteer angle e','predictedSteer angle e')
+plot(Results.estimatedSteer_angle.Time(:,1),Results.estimatedSteer_angle.Data(:,1));
+legend('refSteer angle','trueSteer angle e','estimatedSteer angle e')
 xlabel('Time [t]')
 ylabel('Angle [rad]')
 % ylim([-3 3])
