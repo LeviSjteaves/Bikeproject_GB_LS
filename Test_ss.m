@@ -49,7 +49,10 @@ B = [0 0 0 0 ((lr*v)/(h^2*(lr+lf))) 1 0]';
 
 % C and D matrix (measurement model)
 C = eye(7);
+% C(1:end,3) = 0; 
+% C(3,:) = [];
 D = zeros(7,1);
+% D(7,:) = [];
 
 sys_c = ss(A,B,C,D);
 sys_d2 = ss(A,B,C,D,Ts);

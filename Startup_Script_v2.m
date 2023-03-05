@@ -19,7 +19,7 @@ clc;
     % Sampling Time
         Ts = 0.01; 
     % Horizon distance [m]
-        hor_dis = 1;
+        hor_dis = 0.5;
     % Constant Speed [m/s]
         v = 3;    
 
@@ -54,9 +54,9 @@ clc;
 % SHAPE options: sharp_turn, line, infinite, circle, ascent_sin, smooth_curve
 type = 'infinite';
 % Distance between points [m]
-ref_dis = 0.05;
+ref_dis = 0.025;
 % Number# of reference points
-N = 150; 
+N = 300; 
 % Scale (only for infinite and circle)
 scale = 100; 
 
@@ -167,7 +167,11 @@ B = [0 0 0 0 ((lr*v)/(h^2*(lr+lf))) 1 0]';
 
 % C and D matrix (measurement model)
 C = eye(7);
+C(1:end,3) = 0; 
+C(3,:) = [];
+
 D = zeros(7,1);
+D(7,:) = [];
 
 % Transform to state space model
 % sys = ss(A,B,C,D);   % continuous
@@ -176,7 +180,7 @@ A_d = (eye(size(A))+Ts*A);
 
 % Q and R matrix
 Q = eye(7);
-R = eye(7);
+R = eye(6);
 
 % idare function
 [P1,Kalman_gain1,eig] = idare(A_d',C',Q,R,[],[]);
@@ -317,8 +321,8 @@ title('Steer rate')
 % Ids and closest point index
 figure();
 hold on
-plot(Results.closest_point.Data)
-plot(Results.ids.Data)
+plot(Results.closest_point.Time,Results.closest_point.Data)
+plot(Results.ids.Time,Results.ids.Data)
 legend('Closest index', 'ids')
 xlabel('Iteration [-]')
 ylabel('Index [-]')
