@@ -12,6 +12,7 @@ c = 0.06;
 m = 31.3;
 g = 9.81;
 
+
 lr = b; % distance from rear wheel center to center of mass
 lf = b-a; % distance from front wheen center to center of mass
 
@@ -48,9 +49,16 @@ A = [0 0 0 0 0 0 1;
 B = [0 0 0 0 ((lr*v)/(h^2*(lr+lf))) 1 0]';
 
 % C and D matrix (measurement model)
-C = eye(7);
-D = zeros(7,1);
-
+% C = eye(7);
+% D = zeros(7,1);
+C = [1 0 0 0 0 0 0;
+     0 1 0 0 0 0 0;
+     0 0 0 g-((h_imu*g)/h) 0 -h_*imu*(h*v^2-g*a*c)*sin(lambda)/(b*h^2) + (v^2*sin(lambda))/b 0;
+     0 0 0 0 1 0 0;
+     0 0 0 0 0 (v*sin(lambda))/b 0;
+     0 0 0 0 0 1 0;
+     0 0 0 0 0 0 1];
+D = [(-h_imu*a*v*sin(lambda))/(b*h) 0 0 0 0 0 0];
 
 % % Continuous update
 res = A*States_l + B*dot_delta_e;
@@ -59,7 +67,7 @@ res = A*States_l + B*dot_delta_e;
 A_d = (eye(size(A))+Ts*A);
 res_d = A_d*States_l + B*dot_delta_e;
 
-%% Copied from Simulink
+%% Copy from Simulink!!
 
 % Time update in local frame continuous
 states_dot = zeros(7,1);
@@ -72,6 +80,15 @@ states_dot(5) = (g/h)*States(4) + ((v^2*h-lr*g*c)/(h*(lr+lf)))*States(6) + ((lr*
 states_dot(6) = dot_delta_e;
 states_dot(7) = 0;
 
+% Measurement update
+X_GPS       = States_l(1);  
+Y_GPS       = States_l(2);
+A_con       = States_l(3)*(((-h_imu*(h*v^2-g*a*c)*sin(lambda))/b*h^2)+((v^2*sin(lambda))/(b))) + States_l(4)*(g-((h_imu*g)/(h)))+ (-h_imu*a*v*sin(lambda)/(b*h))*delta_e;
+omega_x     = States_l(5);
+omega_z     = States_l(6)*(v*sin(lambda))/(b);
+delta_enc   = States_l(6);
+v           = States_l(7);
+
 % Continuous update
  res2 = states_dot;
 
@@ -80,13 +97,15 @@ res_d2 = States_l + states_dot * Ts;
 
 %% Check results
 
-if res ~= res_2
+if res ~= res2
     disp('Continuous update does not match. Check that simulinks and matlabs state space models are the same.')
 else
-    disp('Bot')
+    disp('Both state space models are the same.')
 end
 if res_d ~= res_d2
     disp('If both state space models are the same, check that the discretization is correctly done.')
+else
+    disp('Both state space models are the same and the discretization is correctly done.')
 end
 
 

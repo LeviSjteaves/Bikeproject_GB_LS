@@ -11,6 +11,7 @@ lambda = deg2rad(66);
 c = 0.06;
 m = 31.3;
 g = 9.81;
+h_imu = 0.215;
 
 lr = b; % distance from rear wheel center to center of mass
 lf = b-a; % distance from front wheen center to center of mass
@@ -31,7 +32,7 @@ States_l(7) = States(7);
 
 % Input value (= 0  if A wants to be tested, != if Ax+Bu wants to be
 % tested)
-dot_delta_e = 0;
+dot_delta_e = 2;
 
 %% Matlab script to obtain Kalman gain
 
@@ -48,15 +49,27 @@ A = [0 0 0 0 0 0 1;
 B = [0 0 0 0 ((lr*v)/(h^2*(lr+lf))) 1 0]';
 
 % C and D matrix (measurement model)
-C = eye(7);
-D = zeros(7,1);
+% C = eye(7);
+% D = zeros(7,1);
+C = [1 0 0 0 0 0 0;
+     0 1 0 0 0 0 0;
+     0 0 0 g-((h_imu*g)/h) 0 (-h_imu*(h*v^2-(g*a*c))*sin(lambda))/(b*h^2) + (v^2*sin(lambda))/b 0;
+     0 0 0 0 1 0 0;
+     0 0 0 0 0 (v*sin(lambda))/b 0;
+     0 0 0 0 0 1 0;
+     0 0 0 0 0 0 1];
 
-% % Continuous update
+D = [0 0 (-h_imu*a*v*sin(lambda))/(b*h) 0 0 0 0]';
+
+% Continuous update
 res = A*States_l + B*dot_delta_e;
 
 % Discrete update
 A_d = (eye(size(A))+Ts*A);
 res_d = A_d*States_l + B*dot_delta_e;
+
+% Measurement update
+y = C*States_l + D*dot_delta_e
 
 %% Copy from Simulink!!
 
@@ -71,11 +84,23 @@ states_dot(5) = (g/h)*States(4) + ((v^2*h-lr*g*c)/(h*(lr+lf)))*States(6) + ((lr*
 states_dot(6) = dot_delta_e;
 states_dot(7) = 0;
 
+% Measurement update
+X_GPS       = States_l(1);  
+Y_GPS       = States_l(2);
+a_y         = States_l(6)*((-h_imu*(h*v^2-(g*a*c))*sin(lambda)/(b*h^2))+((v^2*sin(lambda))/(b))) + States_l(4)*(g-((h_imu*g)/(h)))+ (-h_imu*a*v*sin(lambda)/(b*h))*dot_delta_e;
+omega_x     = States_l(5);
+omega_z     = States_l(6)*(v*sin(lambda))/(b);
+delta_enc   = States_l(6);
+v_sens      = States_l(7);
+
 % Continuous update
  res2 = states_dot;
 
 % Discrete time update
 res_d2 = States_l + states_dot * Ts;
+
+% Measurement
+y2 = [X_GPS Y_GPS a_y omega_x omega_z delta_enc v_sens]'
 
 %% Check results
 

@@ -34,7 +34,7 @@ clc;
 % bike model
     bike_model = 1; % 1 = non-linear model || 2 = linear model
 % Run all test cases
-    Run_tests = 1; % 0 = Don't run test cases || 1 = run test cases
+    Run_tests = 0; % 0 = Don't run test cases || 1 = run test cases
 
 % Initial states
 
@@ -169,13 +169,10 @@ B = [0 0 0 0 ((lr*v)/(h^2*(lr+lf))) 1 0]';
 C = eye(7);
 C(1:end,3) = 0; 
 C(3,:) = [];
-
 D = zeros(7,1);
 D(7,:) = [];
 
 % Transform to state space model
-% sys = ss(A,B,C,D);   % continuous
-% sys_d = ss(A,B,C,D,Ts); % discrete
 A_d = (eye(size(A))+Ts*A);
 
 % Q and R matrix
@@ -191,6 +188,17 @@ Kalman_gain1 = Kalman_gain1';
 [Kalman_gain2, P2, Z,E] = dlqe(A_d,eye(7),C,Q,R);
 Kalman_gain2 = A_d * Kalman_gain2;
 
+% Polish the kalman gain (values <10-5 are set to zero)
+for i = 1:size(Kalman_gain1,1)
+    for j = 1:size(Kalman_gain1,2)
+        if Kalman_gain1(i,j) < 10^-5
+            Kalman_gain1(i,j) = 0;
+        end
+        if Kalman_gain2(i,j) < 10^-5
+            Kalman_gain2(i,j) = 0;
+        end
+    end
+end    
 
 
 %% Start the Simulation
