@@ -15,11 +15,11 @@ clc;
     % Name of the model
         model = 'Main_v2';
     % Simulation time
-        sim_time = 100;
+        sim_time = 200;
     % Sampling Time
         Ts = 0.01; 
     % Horizon distance [m]
-        hor_dis = 0.5;
+        hor_dis = 1;
     % Constant Speed [m/s]
         v = 3;    
 
@@ -34,7 +34,7 @@ clc;
 % bike model
     bike_model = 1; % 1 = non-linear model || 2 = linear model
 % Run all test cases
-    Run_tests = 0; % 0 = Don't run test cases || 1 = run test cases
+    Run_tests = 1; % 0 = Don't run test cases || 1 = run test cases
 
 % Initial states
 
@@ -54,9 +54,9 @@ clc;
 % SHAPE options: sharp_turn, line, infinite, circle, ascent_sin, smooth_curve
 type = 'infinite';
 % Distance between points [m]
-ref_dis = 0.025;
+ref_dis = 0.1;
 % Number# of reference points
-N = 300; 
+N = 100; 
 % Scale (only for infinite and circle)
 scale = 100; 
 
