@@ -34,7 +34,7 @@ clc;
 % bike model
     bike_model = 1; % 1 = non-linear model || 2 = linear model
 % Run all test cases
-    Run_tests = 0; % 0 = Don't run test cases || 1 = run test cases
+    Run_tests = 1; % 0 = Don't run test cases || 1 = run test cases
 
 % Initial states
 
@@ -65,6 +65,8 @@ test_curve=[Xref,Yref,Psiref];
 Nn = size(test_curve,1); % needed for simulink
 
 %% Reference test (warnings and initialization update)
+if Run_tests == 0
+
 Output_reference_test = referenceTest(test_curve,hor_dis,Ts,initial_pose,v, ref_dis);
 
 %update initial states if offset is detected
@@ -73,6 +75,7 @@ initial_state.y = Output_reference_test(2);
 initial_state.heading = Output_reference_test(3);
 initial_pose = [initial_state.x; initial_state.y; initial_state.heading];
 initial_state_estimate = initial_state;
+end
 
 %% Disturbance Model
 % 
@@ -375,11 +378,12 @@ if Run_tests == 1
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %TEST CASE 1 Sparse infinite
+Tnumber = 'Test case 1: Sparse infinite';
 disp('Test case 1: Sparse infinite')
 
 type = 'infinite';
 ref_dis = 0.5;
-N = 15; 
+N = 18; 
 scale = 100; 
 [Xref,Yref,Psiref] = ReferenceGenerator(type,ref_dis,N,scale);
 test_curve=[Xref,Yref,Psiref];
@@ -387,6 +391,11 @@ Nn = size(test_curve,1); % needed for simulink
 
 %test reference
 Output_reference_test = referenceTest(test_curve,hor_dis,Ts,initial_pose,v,ref_dis);
+initial_state.x = Output_reference_test(1);
+initial_state.y = Output_reference_test(2);
+initial_state.heading = Output_reference_test(3);
+initial_pose = [initial_state.x; initial_state.y; initial_state.heading];
+initial_state_estimate = initial_state;
 
 try Results = sim(model);
     catch error_details 
@@ -396,116 +405,69 @@ if Results.stop.Data(end) == 1
     disp('Message: End of the trajectory has been reached');
 end
 
-% Trajectory
-figure()
-plot(Results.refPsi.Time,Results.refPsi.Data(:,1))
-figure();
-subplot(3,2,[1,3,5]);
-hold on;
-plot3(Xref,Yref,1:length(Xref));
-plot3(Results.trueX.Data(:,1),Results.trueY.Data(:,1),Results.trueY.Time(:,1));
-view(0,90)
-% plot(Results.predictedX.Data(:,1),Results.predictedY.Data(:,1));
-legend('Ref','true');
-xlabel('X-dir [m]');
-ylabel('Y-dir [m]');
-grid on;
-title('Trajectory');
+Plot_bikesimulation_results(Tnumber, Results, bike_params);
 
-subplot(3,2,2)
-plot(Results.error2.Time,Results.error2.Data) 
-xlabel('Iteration')
-ylabel('Distance [m]')
-grid on
-title('Lateral error')
-
-subplot(3,2,4)
-plot(Results.error1.Time,Results.error1.Data)
-xlabel('Iteration [-]')
-ylabel('Angle [rad]')
-grid on
-title('Heading error')
-
-subplot(3,2,6)
-hold on
-plot(Results.closest_point.Time,Results.closest_point.Data)
-plot(Results.ids.Time,Results.ids.Data)
-legend('Closest index', 'ids')
-xlabel('Iteration [-]')
-ylabel('Index [-]')
-grid on
-title('Closes+ids')
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% %TEST CASE 2 Large offset X:-5 Y:0 PSI: 0
-% disp('Test case 2: Large offset')
-% 
-% type = 'line';
-% ref_dis = 0.1;
-% N = 1000; 
-% scale = 100; 
-% [Xref,Yref,Psiref] = ReferenceGenerator(type,ref_dis,N,scale);
-% test_curve=[Xref,Yref,Psiref];
-% Nn = size(test_curve,1); % needed for simulink
-% 
-% %test reference
-% Output_reference_test = referenceTest(test_curve,hor_dis,Ts,initial_pose,v,ref_dis);
-% initial_state.x = Output_reference_test(1);
-% initial_state.y = Output_reference_test(2)-5;
-% initial_state.heading = Output_reference_test(3);
-% initial_pose = [initial_state.x; initial_state.y; initial_state.heading];
-% 
-% try Results = sim(model);
-%     catch error_details 
-% end
-% % Simulation Messages and Warnings
-% if Results.stop.Data(end) == 1
-%     disp('Message: End of the trajectory has been reached');
-% end
-% 
-% % Trajectory
-% % Trajectory
-% figure();
-% subplot(3,2,[1,3,5]);
-% hold on;
-% plot3(Xref,Yref,1:length(Xref));
-% plot3(Results.trueX.Data(:,1),Results.trueY.Data(:,1),Results.trueY.Time(:,1));
-% view(0,90)
-% % plot(Results.predictedX.Data(:,1),Results.predictedY.Data(:,1));
-% legend('Ref','true');
-% xlabel('X-dir [m]');
-% ylabel('Y-dir [m]');
-% grid on;
-% title('Trajectory');
-% 
-% subplot(3,2,2)
-% plot(Results.error2.Time,Results.error2.Data) 
-% xlabel('Iteration')
-% ylabel('Distance [m]')
-% grid on
-% title('Lateral error')
-% 
-% subplot(3,2,4)
-% plot(Results.error1.Time,Results.error1.Data)
-% xlabel('Iteration [-]')
-% ylabel('Angle [rad]')
-% grid on
-% title('Heading error')
-% 
-% subplot(3,2,6)
-% hold on
-% plot(Results.closest_point.Time,Results.closest_point.Data)
-% plot(Results.ids.Time,Results.ids.Data)
-% legend('Closest index', 'ids')
-% xlabel('Iteration [-]')
-% ylabel('Index [-]')
-% grid on
-% title('Closes+ids')
+%TEST CASE 2 Large offset X:-5 Y:0 PSI: 0
+Tnumber = 'Test case 2: Large offset';
+disp('Test case 2: Large offset');
+
+type = 'line';
+ref_dis = 0.1;
+N = 1000; 
+scale = 100; 
+[Xref,Yref,Psiref] = ReferenceGenerator(type,ref_dis,N,scale);
+test_curve=[Xref,Yref,Psiref];
+Nn = size(test_curve,1); % needed for simulink
+
+%test reference
+Output_reference_test = referenceTest(test_curve,hor_dis,Ts,initial_pose,v,ref_dis);
+initial_state.x = Output_reference_test(1);
+initial_state.y = Output_reference_test(2)-5;
+initial_state.heading = Output_reference_test(3);
+initial_pose = [initial_state.x; initial_state.y; initial_state.heading];
+initial_state_estimate = initial_state;
+
+try Results = sim(model);
+    catch error_details 
+end
+% Simulation Messages and Warnings
+if Results.stop.Data(end) == 1
+    disp('Message: End of the trajectory has been reached');
+end
+
+Plot_bikesimulation_results(Tnumber, Results, bike_params);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
-%TEST CASE 3
-% try Results = sim(model);
-%     catch error_details 
-% end
+%TEST CASE 3 Small circle
+Tnumber = 'Test case 3: Small circle';
+disp('Test case 3: Small circle')
+
+type = 'circle';
+ref_dis = 0.5;
+N = 100; 
+scale = 5; 
+[Xref,Yref,Psiref] = ReferenceGenerator(type,ref_dis,N,scale);
+test_curve=[Xref,Yref,Psiref];
+Nn = size(test_curve,1); % needed for simulink
+
+%test reference
+Output_reference_test = referenceTest(test_curve,hor_dis,Ts,initial_pose,v,ref_dis);
+initial_state.x = Output_reference_test(1);
+initial_state.y = Output_reference_test(2);
+initial_state.heading = Output_reference_test(3);
+initial_pose = [initial_state.x; initial_state.y; initial_state.heading];
+initial_state_estimate = initial_state;
+
+try Results = sim(model);
+    catch error_details 
+end
+% Simulation Messages and Warnings
+if Results.stop.Data(end) == 1
+    disp('Message: End of the trajectory has been reached');
+end
+
+Plot_bikesimulation_results(Tnumber, Results, bike_params);
 
 end
 
