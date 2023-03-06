@@ -69,7 +69,7 @@ A_d = (eye(size(A))+Ts*A);
 res_d = A_d*States_l + B*dot_delta_e;
 
 % Measurement update
-y = C*States_l + D*dot_delta_e
+y = C*States_l + D*dot_delta_e;
 
 %% Copy from Simulink!!
 
@@ -100,7 +100,7 @@ v_sens      = States_l(7);
 res_d2 = States_l + states_dot * Ts;
 
 % Measurement
-y2 = [X_GPS Y_GPS a_y omega_x omega_z delta_enc v_sens]'
+y2 = [X_GPS Y_GPS a_y omega_x omega_z delta_enc v_sens]';
 
 %% Check results
 
@@ -114,7 +114,11 @@ if res_d ~= res_d2
 else
     disp('Both state space models are the same and the discretization is correctly done.')
 end
-
+if y ~= y2
+    disp('Measurement equations are not the same in both simulink and matlab.')
+else
+    disp('Measurement equations are the same in both simulink and matlab.')
+end
 
 
 

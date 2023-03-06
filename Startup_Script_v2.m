@@ -148,6 +148,7 @@ a = bike_params.a;
 lambda = bike_params.lambda;
 c = bike_params.c;
 m = bike_params.m;
+h_imu = bike_params.IMU_height;
 
 % Notations of simulink
 lr = bike_params.b; % distance from rear wheel center to center of mass
@@ -166,18 +167,28 @@ A = [0 0 0 0 0 0 1;
 B = [0 0 0 0 ((lr*v)/(h^2*(lr+lf))) 1 0]';
 
 % C and D matrix (measurement model)
-C = eye(7);
-C(1:end,3) = 0; 
-C(3,:) = [];
-D = zeros(7,1);
-D(7,:) = [];
+% C = eye(7);
+% C(1:end,3) = 0; 
+% C(3,:) = [];
+% D = zeros(7,1);
+% D(7,:) = [];
+C = [1 0 0 0 0 0 0;
+     0 1 0 0 0 0 0;
+     0 0 0 g-((h_imu*g)/h) 0 (-h_imu*(h*v^2-(g*a*c))*sin(lambda))/(b*h^2) + (v^2*sin(lambda))/b 0;
+     0 0 0 0 1 0 0;
+     0 0 0 0 0 (v*sin(lambda))/b 0;
+     0 0 0 0 0 1 0;
+     0 0 0 0 0 0 1];
+C_inv = inv(C);
+
+D = [0 0 (-h_imu*a*v*sin(lambda))/(b*h) 0 0 0 0]';
 
 % Transform to state space model
 A_d = (eye(size(A))+Ts*A);
 
 % Q and R matrix
 Q = eye(7);
-R = eye(6);
+R = eye(7);
 
 % idare function
 [P1,Kalman_gain1,eig] = idare(A_d',C',Q,R,[],[]);
