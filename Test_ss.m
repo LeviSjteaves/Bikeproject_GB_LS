@@ -49,27 +49,16 @@ B = [0 0 0 0 ((lr*v)/(h^2*(lr+lf))) 1 0]';
 
 % C and D matrix (measurement model)
 C = eye(7);
-% C(1:end,3) = 0; 
-% C(3,:) = [];
 D = zeros(7,1);
-% D(7,:) = [];
-
-sys_c = ss(A,B,C,D);
-sys_d2 = ss(A,B,C,D,Ts);
-sys_d = c2d(sys_c,Ts);
-% sys_d.A
-% sys_d2.A
 
 % % Continuous update
-% res = sys_c.A*States_l + sys_c.B*dot_delta_e
+res = A*States_l + B*dot_delta_e;
 
 % Discrete update
 A_d = (eye(size(A))+Ts*A);
-res_d = A_d*States_l
-% res_d1 = sys_d.A*States_l + sys_d.B*dot_delta_e
-% res_d2 = sys_d2.A*States_l + sys_d2.B*dot_delta_e
+res_d = A_d*States_l + B*dot_delta_e;
 
-%% Copied from Simulink
+%% Copy from Simulink!!
 
 % Time update in local frame continuous
 states_dot = zeros(7,1);
@@ -82,26 +71,26 @@ states_dot(5) = (g/h)*States(4) + ((v^2*h-lr*g*c)/(h*(lr+lf)))*States(6) + ((lr*
 states_dot(6) = dot_delta_e;
 states_dot(7) = 0;
 
-% % Continuous update
-% res3 = states_dot
+% Continuous update
+ res2 = states_dot;
 
 % Discrete time update
-res_d3 = States_l + states_dot * Ts
+res_d2 = States_l + states_dot * Ts;
 
-%% jjjsjj
+%% Check results
 
-meas(1) = 100;
-meas(2) = 0;
-States(3) = pi/2;
+if res ~= res2
+    disp('Continuous update does not match. Check that simulinks and matlabs state space models are the same.')
+else
+    disp('Both state space models are the same.')
+end
+if res_d ~= res_d2
+    disp('If both state space models are the same, check that the discretization is correctly done.')
+else
+    disp('Both state space models are the same and the discretization is correctly done.')
+end
 
-meas_l = zeros(7,1);
-meas_l(1) = meas(1) * cos(States(3)) + meas(2) * sin(States(3))
-meas_l(2) = -meas(1) * sin(States(3)) + meas(2) * cos(States(3))
-% meas_l(3) = 0;        
-% meas_l(4) = meas(4);
-% meas_l(5) = meas(5);
-% meas_l(6) = meas(6);
-% meas_l(7) = meas(7);
+
 
 
 
