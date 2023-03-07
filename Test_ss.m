@@ -104,21 +104,20 @@ y2 = [X_GPS Y_GPS a_y omega_x omega_z delta_enc v_sens]';
 
 %% Check results
 
-if res ~= res2
-    disp('Continuous update does not match. Check that simulinks and matlabs state space models are the same.')
+if res ~= res2 || res_d ~= res_d2 || y ~= y2
+    disp('The equation from simulink and matlabs matrices does not match.')
 else
-    disp('Both state space models are the same.')
+    disp('The equations from simulink are equivalent to matlabs matrices.')
 end
-if res_d ~= res_d2
-    disp('If both state space models are the same, check that the discretization is correctly done.')
-else
-    disp('Both state space models are the same and the discretization is correctly done.')
+if res ~= res2
+    disp('Continuous time equations are not the same')
+elseif res_d ~= res_d2
+    disp('Check the discretization')
 end
 if y ~= y2
-    disp('Measurement equations are not the same in both simulink and matlab.')
-else
-    disp('Measurement equations are the same in both simulink and matlab.')
+    disp('Measurement equations are not equivalent in simulink and matlab.')
 end
+
 
 
 

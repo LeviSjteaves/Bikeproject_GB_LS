@@ -34,7 +34,7 @@ clc;
 % bike model
     bike_model = 1; % 1 = non-linear model || 2 = linear model
 % Run all test cases
-    Run_tests = 1; % 0 = Don't run test cases || 1 = run test cases
+    Run_tests = 0; % 0 = Don't run test cases || 1 = run test cases
 
 % Initial states
 
@@ -54,9 +54,9 @@ clc;
 % SHAPE options: sharp_turn, line, infinite, circle, ascent_sin, smooth_curve
 type = 'infinite';
 % Distance between points [m]
-ref_dis = 0.1;
+ref_dis = 0.01;
 % Number# of reference points
-N = 100; 
+N = 1000; 
 % Scale (only for infinite and circle)
 scale = 100; 
 
@@ -128,7 +128,7 @@ D_balancing_inner = 0;
 
 %% The LQR controller
 
-%error model for LQR controller calculation
+% error model for LQR controller calculation
 A_con=[0 v;0 0];
 B_con=[bike_params.a*v/bike_params.b;v/bike_params.b];
 
@@ -182,7 +182,6 @@ C = [1 0 0 0 0 0 0;
      0 0 0 0 0 (v*sin(lambda))/b 0;
      0 0 0 0 0 1 0;
      0 0 0 0 0 0 1];
-C_inv = inv(C);
 
 D = [0 0 (-h_imu*a*v*sin(lambda))/(b*h) 0 0 0 0]';
 
@@ -213,7 +212,6 @@ for i = 1:size(Kalman_gain1,1)
         end
     end
 end    
-
 
 %% Start the Simulation
 if Run_tests == 0
@@ -276,12 +274,12 @@ title('Y-coordinate');
 
 subplot(3,1,3)
 hold on;
-plot(Results.refPsi.Time(:,1),Results.refPsi.Data(:,1));
-plot(Results.truePsi.Time(:,1),Results.truePsi.Data(:,1));
-plot(Results.estimatedPsi.Time(:,1),Results.estimatedPsi.Data(:,1));
+plot(Results.refPsi.Time(:,1),rad2deg(Results.refPsi.Data(:,1)));
+plot(Results.truePsi.Time(:,1),rad2deg(Results.truePsi.Data(:,1)));
+plot(Results.estimatedPsi.Time(:,1),rad2deg(Results.estimatedPsi.Data(:,1)));
 legend('Psiref','truePsi','estimatedPsi');
 xlabel('Time [t]');
-ylabel('Angle [rad]');
+ylabel('Angle [Deg]');
 % ylim([-50 50])
 % xlim([-100 100])
 grid on;
@@ -292,12 +290,12 @@ figure();
 
 subplot(2,1,1)
 hold on;
-plot(Results.refRoll.Time(:,1),Results.refRoll.Data(:,1));
-plot(Results.trueRoll.Time(:,1),Results.trueRoll.Data(:,1));
-plot(Results.estimatedRoll.Time(:,1),Results.estimatedRoll.Data(:,1));
+plot(Results.refRoll.Time(:,1),rad2deg(Results.refRoll.Data(:,1)));
+plot(Results.trueRoll.Time(:,1),rad2deg(Results.trueRoll.Data(:,1)));
+plot(Results.estimatedRoll.Time(:,1),rad2deg(Results.estimatedRoll.Data(:,1)));
 legend('Rollref','trueRoll','estimatedRoll');
 xlabel('Time [t]');
-ylabel('Angle [rad]');
+ylabel('Angle [Deg]');
 ylim([-3 3])
 % xlim([-100 100])
 grid on;
@@ -305,11 +303,11 @@ title('Roll');
 
 subplot(2,1,2)
 hold on
-plot(Results.trueRoll_rate.Time(:,1),Results.trueRoll_rate.Data(:,1));
-plot(Results.estimatedRoll_rate.Time(:,1),Results.estimatedRoll_rate.Data(:,1));
+plot(Results.trueRoll_rate.Time(:,1),rad2deg(Results.trueRoll_rate.Data(:,1)));
+plot(Results.estimatedRoll_rate.Time(:,1),rad2deg(Results.estimatedRoll_rate.Data(:,1)));
 legend('trueRoll rate','estimatedRoll rate');
 xlabel('Time [t]');
-ylabel('Angle rate [rad/s]');
+ylabel('Angle rate [Deg/s]');
 ylim([-3 3])
 % xlim([0 0])
 grid on;
@@ -320,21 +318,21 @@ figure();
 
 subplot(2,1,1)
 hold on;
-plot(Results.refSteer_angle.Time(:,1),Results.refSteer_angle.Data(:,1));
-plot(Results.trueSteer_angle.Time(:,1),Results.trueSteer_angle.Data(:,1)*sin(bike_params.lambda));
-plot(Results.estimatedSteer_angle.Time(:,1),Results.estimatedSteer_angle.Data(:,1));
+plot(Results.refSteer_angle.Time(:,1),rad2deg(Results.refSteer_angle.Data(:,1)));
+plot(Results.trueSteer_angle.Time(:,1),rad2deg(Results.trueSteer_angle.Data(:,1)*sin(bike_params.lambda)));
+plot(Results.estimatedSteer_angle.Time(:,1),rad2deg(Results.estimatedSteer_angle.Data(:,1)));
 legend('refSteer angle','trueSteer angle e','estimatedSteer angle e')
 xlabel('Time [t]')
-ylabel('Angle [rad]')
+ylabel('Angle [Deg]')
 % ylim([-3 3])
 % xlim([0 0])
 grid on
 title('Steer angle')
 
 subplot(2,1,2)
-plot(Results.steer_rate.Time(:,1),Results.steer_rate.Data(:,1))
+plot(Results.steer_rate.Time(:,1),rad2deg(Results.steer_rate.Data(:,1)))
 xlabel('Time [t]')
-ylabel('Angle [rad/s]')
+ylabel('Angle [Deg/s]')
 % ylim([-3 3])
 % xlim([0 0])
 grid on
@@ -357,16 +355,16 @@ title('Closes+ids')
 figure();
 
 subplot(1,2,1)
-plot(Results.error2.Time,Results.error2.Data) 
-xlabel('Iteration')
+plot(Results.error1.Time,Results.error1.Data) 
+xlabel('Time [s]')
 ylabel('Distance [m]')
 grid on
 title('Lateral error')
 
 subplot(1,2,2)
-plot(Results.error1.Time,Results.error1.Data)
-xlabel('Iteration [-]')
-ylabel('Angle [rad]')
+plot(Results.error2.Time,rad2deg(Results.error2.Data))
+xlabel('Time [s]')
+ylabel('Angle [Deg]')
 grid on
 title('Heading error')
 
