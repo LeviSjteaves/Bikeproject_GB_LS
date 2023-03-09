@@ -15,7 +15,7 @@ clc;
     % Name of the model
         model = 'Main_v2';
     % Simulation time
-        sim_time = 50;
+        sim_time = 100;
     % Sampling Time
         Ts = 0.01; 
     % Horizon distance [m]
