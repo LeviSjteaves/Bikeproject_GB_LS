@@ -1,5 +1,5 @@
 function [Xref,Yref,Psiref] = ReferenceGenerator(type,ref_dis,N,scale)
-% look at choice t, define N, ref_dis
+
     switch type
         case 'sharp_turn'
             t = (0:(N-1))*ref_dis;

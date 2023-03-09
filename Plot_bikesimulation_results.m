@@ -1,10 +1,10 @@
-function [] = Plot_bikesimulation_results(Tnumber, Results, bike_params, traj_plot, Ts)
+function [] = Plot_bikesimulation_results(Tnumber, test_curve,Results, bike_params, traj_plot, Ts)
 
 % Trajectory
 figure('Name',Tnumber);
 subplot(3,2,[1,3,5]);
 hold on;
-plot3(Results.refX.Data,Results.refY.Data,1:length(Results.refX.Data));
+plot3(test_curve(:,1),test_curve(:,2),1:length(test_curve(:,1)));
 plot3(Results.trueX.Data(:,1),Results.trueY.Data(:,1),Results.trueX.Time(:,1));
 plot3(Results.estimatedX.Data(:,1),Results.estimatedY.Data(:,1),Results.estimatedY.Time(:,1));
 view(0,90)
@@ -35,6 +35,7 @@ subplot(3,2,6)
 hold on
 plot(Results.ids.Time,Results.ids.Data)
 plot(Results.closest_point.Time,Results.closest_point.Data)
+plot(Results.closestpoint_heading.Time,Results.closestpoint_heading.Data)
 legend( 'Selected point index','New closest detected')
 xlabel('Time [s]')
 ylabel('Index [-]')

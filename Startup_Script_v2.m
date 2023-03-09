@@ -1,4 +1,3 @@
-
 %% clear the possible remnant on previous running
 
 set(0,'defaulttextinterpreter','none');
@@ -54,9 +53,10 @@ clc;
 % SHAPE options: sharp_turn, line, infinite, circle, ascent_sin, smooth_curve
 type = 'infinite';
 % Distance between points
-ref_dis = 0.02;
+ref_dis = 0.5;
+
 % Number# of reference points
-N = 1000; 
+N = 13; 
 % Scale (only for infinite and circle)
 scale = 75; 
 
@@ -256,7 +256,7 @@ Tnumber = 'No test case: General simulation run';
         traj_plot.ymax = 100;
         traj_plot.xmin = -150;
         traj_plot.xmax = 150;
-        Plot_bikesimulation_results(Tnumber, Results, bike_params, traj_plot, Ts);
+        Plot_bikesimulation_results(Tnumber, test_curve, Results, bike_params, traj_plot, Ts);
 
 end
 

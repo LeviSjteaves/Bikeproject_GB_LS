@@ -56,7 +56,7 @@ type = 'infinite';
 % Distance between points
 ref_dis = 0.02;
 % Number# of reference points
-N = 1000; 
+N = 100; 
 % Scale (only for infinite and circle)
 scale = 75; 
 
