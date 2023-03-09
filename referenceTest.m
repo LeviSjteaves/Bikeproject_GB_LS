@@ -61,7 +61,7 @@ end
 end
 
 if length(index) ~= 1
-message_turn = ['Message: An unrealistic sharp turn has been detected (>',num2str(Warningturn),' degree), index:'];
+message_turn = ['Warning: An unrealistic sharp turn has been detected (>',num2str(Warningturn),' degree), index:'];
 disp(message_turn)
 disp(index(2:end))
 end

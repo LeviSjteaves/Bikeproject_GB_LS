@@ -1,4 +1,4 @@
-function [] = Plot_bikesimulation_results(Tnumber, Results, bike_params)
+function [] = Plot_bikesimulation_results(Tnumber, Results, bike_params, traj_plot, Ts)
 
 % Trajectory
 figure('Name',Tnumber);
@@ -11,21 +11,23 @@ view(0,90)
 legend('Ref','True', 'Estimated');
 xlabel('X-dir [m]');
 ylabel('Y-dir [m]');
-axis equal
+ylim([traj_plot.ymin traj_plot.ymax])
+xlim([traj_plot.xmin traj_plot.xmax])
+% axis equal
 grid on;
 title('Trajectory');
 
+
 subplot(3,2,2)
-plot(Results.error2.Time,Results.error2.Data) 
+plot(Results.error1.Time,Results.error1.Data)
 xlabel('Time [s]')
 ylabel('Distance [m]')
-grid on
 title('Lateral error')
 
 subplot(3,2,4)
-plot(Results.error1.Time,rad2deg(Results.error1.Data))
-xlabel('Time {s]')
-ylabel('Angle [Deg]')
+plot(Results.error2.Time,rad2deg(Results.error2.Data))
+xlabel('Time [s]')
+ylabel('Angle [deg]')
 grid on
 title('Heading error')
 
@@ -34,7 +36,7 @@ hold on
 plot(Results.ids.Time,Results.ids.Data)
 plot(Results.closest_point.Time,Results.closest_point.Data)
 legend( 'Selected point index','New closest detected')
-xlabel('Iteration [-]')
+xlabel('Time [s]')
 ylabel('Index [-]')
 grid on
 title('Closest point index selection')
@@ -91,7 +93,7 @@ plot(Results.estimatedRoll.Time(:,1),rad2deg(Results.estimatedRoll.Data(:,1)));
 legend('Roll ref','True Roll','Estimated Roll');
 xlabel('Time [t]');
 ylabel('Angle [Deg]');
-ylim([-3 3])
+% ylim([-3 3])
 % xlim([-100 100])
 grid on;
 title('Roll');
@@ -103,7 +105,7 @@ plot(Results.estimatedRoll_rate.Time(:,1),rad2deg(Results.estimatedRoll_rate.Dat
 legend('True Roll rate','Estimated Roll rate');
 xlabel('Time [t]');
 ylabel('Angle rate [Deg/s]');
-ylim([-3 3])
+%ylim([-3 3])
 % xlim([0 0])
 grid on;
 title('Rollrate');
@@ -125,6 +127,14 @@ legend('Ref Steer angle','True Steer angle e','Estimated Steer angle e', 'Steer 
 grid on
 title('Steer angle')
 
+figure()
+y = fft(Results.steer_rate.Data(:,1));
+fs = 1/Ts;
+f = (0:length(y)-1)*fs/length(y);
+plot(f,abs(y))
+xlabel('Frequency (Hz)')
+ylabel('Magnitude')
+title('Magnitude Steerrate')
 
 
 end

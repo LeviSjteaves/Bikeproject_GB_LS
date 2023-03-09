@@ -4,7 +4,7 @@ function [Xref,Yref,Psiref] = ReferenceGenerator(type,ref_dis,N,scale)
         case 'sharp_turn'
             t = (0:(N-1))*ref_dis;
             xref = 7*t;
-            yref = 15*[0*(1:300) 0.01*(1:800) 8*ones(1,1000)];
+            yref = 5*[0*(1:300) 0.01*(1:800) 8*ones(1,1000)];
             psiref=atan2(yref(2:N)-yref(1:N-1),xref(2:N)-xref(1:N-1)); 
             psiref=[psiref(1) psiref];
 

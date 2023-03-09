@@ -34,7 +34,7 @@ clc;
 % bike model
     bike_model = 1; % 1 = non-linear model || 2 = linear model
 % Run all test cases
-    Run_tests = 0; % 0 = Don't run test cases || 1 = run test cases
+    Run_tests = 1; % 0 = Don't run test cases || 1 = run test cases
 
 % Initial states
 
@@ -58,7 +58,7 @@ ref_dis = 0.01;
 % Number# of reference points
 N = 1000; 
 % Scale (only for infinite and circle)
-scale = 100; 
+scale = 75; 
 
 [Xref,Yref,Psiref] = ReferenceGenerator(type,ref_dis,N,scale);
 test_curve=[Xref,Yref,Psiref];
@@ -175,6 +175,7 @@ B = [0 0 0 0 ((lr*v)/(h^2*(lr+lf))) 1 0]';
 % C(3,:) = [];
 % D = zeros(7,1);
 % D(7,:) = [];
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 C = [1 0 0 0 0 0 0;
      0 1 0 0 0 0 0;
      0 0 0 g-((h_imu*g)/h) 0 (-h_imu*(h*v^2-(g*a*c))*sin(lambda))/(b*h^2) + (v^2*sin(lambda))/b 0;
@@ -182,6 +183,7 @@ C = [1 0 0 0 0 0 0;
      0 0 0 0 0 (v*sin(lambda))/b 0;
      0 0 0 0 0 1 0;
      0 0 0 0 0 0 1];
+
 
 D = [0 0 (-h_imu*a*v*sin(lambda))/(b*h) 0 0 0 0]';
 
@@ -234,10 +236,12 @@ figure();
 hold on;
 plot(Xref,Yref);
 plot(Results.trueX.Data(:,1),Results.trueY.Data(:,1));
+% plot(Xref(Results.ids.Data(end)),Yref(Results.ids.Data(end)));
 plot(Results.estimatedX.Data(:,1),Results.estimatedY.Data(:,1));
-legend('Ref','true','estimated');
+legend('Ref','True','Estimated');
 xlabel('X-dir [m]');
 ylabel('Y-dir [m]');
+axis equal
 % ylim([-50 50])
 % xlim([-100 100])
 grid on;
@@ -376,12 +380,11 @@ if Run_tests == 1
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %TEST CASE 1 Sparse infinite
-Tnumber = 'Test case 1: Sparse infinite';
 disp('Test case 1: Sparse infinite')
 
 type = 'infinite';
 ref_dis = 0.5;
-N = 18; 
+N = 40; 
 scale = 100; 
 [Xref,Yref,Psiref] = ReferenceGenerator(type,ref_dis,N,scale);
 test_curve=[Xref,Yref,Psiref];
@@ -395,19 +398,16 @@ initial_state.heading = Output_reference_test(3);
 initial_pose = [initial_state.x; initial_state.y; initial_state.heading];
 initial_state_estimate = initial_state;
 
-try Results = sim(model);
+try Results1 = sim(model);
     catch error_details 
 end
 % Simulation Messages and Warnings
-if Results.stop.Data(end) == 1
+if Results1.stop.Data(end) == 1
     disp('Message: End of the trajectory has been reached');
 end
 
-Plot_bikesimulation_results(Tnumber, Results, bike_params);
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %TEST CASE 2 Large offset X:-5 Y:0 PSI: 0
-Tnumber = 'Test case 2: Large offset';
 disp('Test case 2: Large offset');
 
 type = 'line';
@@ -422,23 +422,20 @@ Nn = size(test_curve,1); % needed for simulink
 Output_reference_test = referenceTest(test_curve,hor_dis,Ts,initial_pose,v,ref_dis);
 initial_state.x = Output_reference_test(1);
 initial_state.y = Output_reference_test(2)-5;
-initial_state.heading = Output_reference_test(3);
+initial_state.heading = Output_reference_test(3)-pi/4;
 initial_pose = [initial_state.x; initial_state.y; initial_state.heading];
 initial_state_estimate = initial_state;
 
-try Results = sim(model);
+try Results2 = sim(model);
     catch error_details 
 end
 % Simulation Messages and Warnings
-if Results.stop.Data(end) == 1
+if Results2.stop.Data(end) == 1
     disp('Message: End of the trajectory has been reached');
 end
 
-Plot_bikesimulation_results(Tnumber, Results, bike_params);
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
 %TEST CASE 3 Small circle
-Tnumber = 'Test case 3: Small circle';
 disp('Test case 3: Small circle')
 
 type = 'circle';
@@ -457,18 +454,76 @@ initial_state.heading = Output_reference_test(3);
 initial_pose = [initial_state.x; initial_state.y; initial_state.heading];
 initial_state_estimate = initial_state;
 
-try Results = sim(model);
+try Results3 = sim(model);
     catch error_details 
 end
 % Simulation Messages and Warnings
-if Results.stop.Data(end) == 1
+if Results3.stop.Data(end) == 1
     disp('Message: End of the trajectory has been reached');
 end
 
-Plot_bikesimulation_results(Tnumber, Results, bike_params);
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
+%TEST CASE 4 Sharp turn
+disp('Test case 4: Sharp turn')
 
+type = 'sharp_turn';
+ref_dis = 0.01;
+N = 2100; 
+scale = 10; 
+[Xref,Yref,Psiref] = ReferenceGenerator(type,ref_dis,N,scale);
+test_curve=[Xref,Yref,Psiref];
+Nn = size(test_curve,1); % needed for simulink
+
+%test reference
+Output_reference_test = referenceTest(test_curve,hor_dis,Ts,initial_pose,v,ref_dis);
+initial_state.x = Output_reference_test(1);
+initial_state.y = Output_reference_test(2);
+initial_state.heading = Output_reference_test(3);
+initial_pose = [initial_state.x; initial_state.y; initial_state.heading];
+initial_state_estimate = initial_state;
+
+try Results4 = sim(model);
+    catch error_details 
+end
+% Simulation Messages and Warnings
+if Results4.stop.Data(end) == 1
+    disp('Message: End of the trajectory has been reached');
 end
 
+end
+%% Plotting Testcases
+if Run_tests == 1
+    close all
+    %Test case 1
+    Tnumber = 'Test case 1: Sparse infinite';
+        traj_plot.ymin = -100;
+        traj_plot.ymax = 100;
+        traj_plot.xmin = -150;
+        traj_plot.xmax = 150;
+        Plot_bikesimulation_results(Tnumber, Results1, bike_params, traj_plot, Ts);
+    %Test case 2 
+    Tnumber = 'Test case 2: Large offset';
+        traj_plot.ymin = -10;
+        traj_plot.ymax = 10;
+        traj_plot.xmin = 0;
+        traj_plot.xmax = 100;
+        Plot_bikesimulation_results(Tnumber, Results2, bike_params, traj_plot, Ts);
+    %Test case 3    
+    Tnumber = 'Test case 3: Small circle';
+        traj_plot.ymin = 24;
+        traj_plot.ymax = 36;
+        traj_plot.xmin = -5;
+        traj_plot.xmax = 5;
+        Plot_bikesimulation_results(Tnumber, Results3, bike_params, traj_plot, Ts);
+    %Test case 4 
+    Tnumber = 'Test case 4: Sharp turn';
+        traj_plot.ymin = -10;
+        traj_plot.ymax = 50;
+        traj_plot.xmin = 0;
+        traj_plot.xmax = 120;
+        Plot_bikesimulation_results(Tnumber, Results4, bike_params, traj_plot, Ts);
+
+end
 
 %% Utility Functions
 
