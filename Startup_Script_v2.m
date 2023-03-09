@@ -15,7 +15,7 @@ clc;
     % Name of the model
         model = 'Main_v2';
     % Simulation time
-        sim_time = 200;
+        sim_time = 50;
     % Sampling Time
         Ts = 0.01; 
     % Horizon distance [m]
@@ -54,7 +54,7 @@ clc;
 % SHAPE options: sharp_turn, line, infinite, circle, ascent_sin, smooth_curve
 type = 'infinite';
 % Distance between points
-ref_dis = 0.002;
+ref_dis = 0.02;
 % Number# of reference points
 N = 1000; 
 % Scale (only for infinite and circle)
@@ -176,7 +176,7 @@ B = [0 0 0 0 ((lr*v)/(h^2*(lr+lf))) 1 0]';
 % D = zeros(7,1);
 % D(7,:) = [];
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%including GPS
+% Including GPS
 C1 = [1 0 0 0 0 0 0;
      0 1 0 0 0 0 0;
      0 0 0 g-((h_imu*g)/h) 0 (-h_imu*(h*v^2-(g*a*c))*sin(lambda))/(b*h^2) + (v^2*sin(lambda))/b 0;
@@ -185,21 +185,22 @@ C1 = [1 0 0 0 0 0 0;
      0 0 0 0 0 1 0;
      0 0 0 0 0 0 1];
 % Without GPS
-C2 = [0 0 0 g-((h_imu*g)/h) 0 (-h_imu*(h*v^2-(g*a*c))*sin(lambda))/(b*h^2) + (v^2*sin(lambda))/b 0;
-     0 0 0 0 1 0 0;
-     0 0 0 0 0 (v*sin(lambda))/b 0;
-     0 0 0 0 0 1 0;
-     0 0 0 0 0 0 1];
+C2 = [g-((h_imu*g)/h) 0 (-h_imu*(h*v^2-(g*a*c))*sin(lambda))/(b*h^2) + (v^2*sin(lambda))/b 0;
+      0 1 0 0;
+      0 0 (v*sin(lambda))/b 0;
+      0 0 1 0;
+      0 0 0 1];
 
 
 D1 = [0 0 (-h_imu*a*v*sin(lambda))/(b*h) 0 0 0 0]';
-D2 = [    (-h_imu*a*v*sin(lambda))/(b*h) 0 0 0 0]';
+D2 = [(-h_imu*a*v*sin(lambda))/(b*h) 0 0 0 0]';
 
 % Transform to state space model
 A_d = (eye(size(A))+Ts*A);
 
 % Q and R matrix
 Q = eye(7);
+Q2 = eye(4);
 R1 = eye(7);
 R2 = eye(5);
 
@@ -210,22 +211,29 @@ eig1 = abs(eig);
 Kalman_gain1 = Kalman_gain1';
 
 %without GPS
-[P2,Kalman_gain2,eig] = idare(A_d',C2',Q,R2,[],[]);
+A_d2 = A_d;
+A_d2(1:3,:) = [];
+A_d2(:,1:3) = [];
+[P2,Kalman_gain2,eig] = idare(A_d2',C2',Q2,R2,[],[]);
 eig2 = abs(eig);
 Kalman_gain2 = Kalman_gain2';
 
 
 % Polish the kalman gain (values <10-5 are set to zero)
-% for i = 1:size(Kalman_gain1,1)
-%     for j = 1:size(Kalman_gain1,2)
-%         if Kalman_gain1(i,j) < 10^-5
-%             Kalman_gain1(i,j) = 0;
-%         end
-%         if Kalman_gain2(i,j) < 10^-5
-%             Kalman_gain2(i,j) = 0;
-%         end
-%     end
-% end    
+for i = 1:size(Kalman_gain1,1)
+    for j = 1:size(Kalman_gain1,2)
+        if Kalman_gain1(i,j) < 10^-5
+            Kalman_gain1(i,j) = 0;
+        end
+    end
+end 
+for i = 1:size(Kalman_gain2,1)
+    for j = 1:size(Kalman_gain2,2)
+        if Kalman_gain2(i,j) < 10^-5
+            Kalman_gain2(i,j) = 0;
+        end
+    end
+end    
 
 %% Start the Simulation
 if Run_tests == 0
