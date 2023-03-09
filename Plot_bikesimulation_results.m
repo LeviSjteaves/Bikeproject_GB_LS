@@ -11,9 +11,9 @@ view(0,90)
 legend('Ref','True', 'Estimated');
 xlabel('X-dir [m]');
 ylabel('Y-dir [m]');
-ylim([traj_plot.ymin traj_plot.ymax])
-xlim([traj_plot.xmin traj_plot.xmax])
-% axis equal
+% ylim([traj_plot.ymin traj_plot.ymax])
+% xlim([traj_plot.xmin traj_plot.xmax])
+axis equal
 grid on;
 title('Trajectory');
 

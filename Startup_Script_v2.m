@@ -34,7 +34,7 @@ clc;
 % bike model
     bike_model = 1; % 1 = non-linear model || 2 = linear model
 % Run all test cases
-    Run_tests = 1; % 0 = Don't run test cases || 1 = run test cases
+    Run_tests = 0; % 0 = Don't run test cases || 1 = run test cases
 
 % Initial states
 
@@ -53,8 +53,8 @@ clc;
 
 % SHAPE options: sharp_turn, line, infinite, circle, ascent_sin, smooth_curve
 type = 'infinite';
-% Distance between points [m]
-ref_dis = 0.01;
+% Distance between points
+ref_dis = 0.002;
 % Number# of reference points
 N = 1000; 
 % Scale (only for infinite and circle)
@@ -176,44 +176,56 @@ B = [0 0 0 0 ((lr*v)/(h^2*(lr+lf))) 1 0]';
 % D = zeros(7,1);
 % D(7,:) = [];
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-C = [1 0 0 0 0 0 0;
+%including GPS
+C1 = [1 0 0 0 0 0 0;
      0 1 0 0 0 0 0;
      0 0 0 g-((h_imu*g)/h) 0 (-h_imu*(h*v^2-(g*a*c))*sin(lambda))/(b*h^2) + (v^2*sin(lambda))/b 0;
      0 0 0 0 1 0 0;
      0 0 0 0 0 (v*sin(lambda))/b 0;
      0 0 0 0 0 1 0;
      0 0 0 0 0 0 1];
+% Without GPS
+C2 = [0 0 0 g-((h_imu*g)/h) 0 (-h_imu*(h*v^2-(g*a*c))*sin(lambda))/(b*h^2) + (v^2*sin(lambda))/b 0;
+     0 0 0 0 1 0 0;
+     0 0 0 0 0 (v*sin(lambda))/b 0;
+     0 0 0 0 0 1 0;
+     0 0 0 0 0 0 1];
 
 
-D = [0 0 (-h_imu*a*v*sin(lambda))/(b*h) 0 0 0 0]';
+D1 = [0 0 (-h_imu*a*v*sin(lambda))/(b*h) 0 0 0 0]';
+D2 = [    (-h_imu*a*v*sin(lambda))/(b*h) 0 0 0 0]';
 
 % Transform to state space model
 A_d = (eye(size(A))+Ts*A);
 
 % Q and R matrix
 Q = eye(7);
-R = eye(7);
+R1 = eye(7);
+R2 = eye(5);
 
 % idare function
-[P1,Kalman_gain1,eig] = idare(A_d',C',Q,R,[],[]);
-eig = abs(eig);
+%including GPS
+[P1,Kalman_gain1,eig] = idare(A_d',C1',Q,R1,[],[]);
+eig1 = abs(eig);
 Kalman_gain1 = Kalman_gain1';
 
-% dlqe function
-[Kalman_gain2, P2, Z,E] = dlqe(A_d,eye(7),C,Q,R);
-Kalman_gain2 = A_d * Kalman_gain2;
+%without GPS
+[P2,Kalman_gain2,eig] = idare(A_d',C2',Q,R2,[],[]);
+eig2 = abs(eig);
+Kalman_gain2 = Kalman_gain2';
+
 
 % Polish the kalman gain (values <10-5 are set to zero)
-for i = 1:size(Kalman_gain1,1)
-    for j = 1:size(Kalman_gain1,2)
-        if Kalman_gain1(i,j) < 10^-5
-            Kalman_gain1(i,j) = 0;
-        end
-        if Kalman_gain2(i,j) < 10^-5
-            Kalman_gain2(i,j) = 0;
-        end
-    end
-end    
+% for i = 1:size(Kalman_gain1,1)
+%     for j = 1:size(Kalman_gain1,2)
+%         if Kalman_gain1(i,j) < 10^-5
+%             Kalman_gain1(i,j) = 0;
+%         end
+%         if Kalman_gain2(i,j) < 10^-5
+%             Kalman_gain2(i,j) = 0;
+%         end
+%     end
+% end    
 
 %% Start the Simulation
 if Run_tests == 0
@@ -230,147 +242,13 @@ if Results.stop.Data(end) == 1
 end
 
 %% Ploting
-
-% Trajectory
-figure();
-hold on;
-plot(Xref,Yref);
-plot(Results.trueX.Data(:,1),Results.trueY.Data(:,1));
-% plot(Xref(Results.ids.Data(end)),Yref(Results.ids.Data(end)));
-plot(Results.estimatedX.Data(:,1),Results.estimatedY.Data(:,1));
-legend('Ref','True','Estimated');
-xlabel('X-dir [m]');
-ylabel('Y-dir [m]');
-axis equal
-% ylim([-50 50])
-% xlim([-100 100])
-grid on;
-title('Trajectory');
-
-% X, Y, Psi
-figure();
-
-subplot(3,1,1)
-hold on;
-plot(Results.refX.Time(:,1),Results.refX.Data(:,1));
-plot(Results.trueX.Time(:,1),Results.trueX.Data(:,1));
-plot(Results.estimatedX.Time(:,1),Results.estimatedX.Data(:,1));
-legend('Xref','trueX','estimatedX');
-xlabel('Time [t]');
-ylabel('Position X [m]');
-% ylim([-50 50])
-% xlim([-100 100])
-grid on;
-title('X-coordinate');
-
-subplot(3,1,2);
-hold on;
-plot(Results.refY.Time(:,1),Results.refY.Data(:,1));                
-plot(Results.trueY.Time(:,1),Results.trueY.Data(:,1));              
-plot(Results.estimatedY.Time(:,1),Results.estimatedY.Data(:,1));    
-legend('Yref','trueY','estimatedY');
-xlabel('Time [t]');
-ylabel('Position Y [m]');
-% ylim([-50 50])
-% xlim([-100 100])
-grid on;
-title('Y-coordinate');
-
-subplot(3,1,3)
-hold on;
-plot(Results.refPsi.Time(:,1),rad2deg(Results.refPsi.Data(:,1)));
-plot(Results.truePsi.Time(:,1),rad2deg(Results.truePsi.Data(:,1)));
-plot(Results.estimatedPsi.Time(:,1),rad2deg(Results.estimatedPsi.Data(:,1)));
-legend('Psiref','truePsi','estimatedPsi');
-xlabel('Time [t]');
-ylabel('Angle [Deg]');
-% ylim([-50 50])
-% xlim([-100 100])
-grid on;
-title('Heading');
-
-% Roll and Roll_rate
-figure();
-
-subplot(2,1,1)
-hold on;
-plot(Results.refRoll.Time(:,1),rad2deg(Results.refRoll.Data(:,1)));
-plot(Results.trueRoll.Time(:,1),rad2deg(Results.trueRoll.Data(:,1)));
-plot(Results.estimatedRoll.Time(:,1),rad2deg(Results.estimatedRoll.Data(:,1)));
-legend('Rollref','trueRoll','estimatedRoll');
-xlabel('Time [t]');
-ylabel('Angle [Deg]');
-ylim([-3 3])
-% xlim([-100 100])
-grid on;
-title('Roll');
-
-subplot(2,1,2)
-hold on
-plot(Results.trueRoll_rate.Time(:,1),rad2deg(Results.trueRoll_rate.Data(:,1)));
-plot(Results.estimatedRoll_rate.Time(:,1),rad2deg(Results.estimatedRoll_rate.Data(:,1)));
-legend('trueRoll rate','estimatedRoll rate');
-xlabel('Time [t]');
-ylabel('Angle rate [Deg/s]');
-ylim([-3 3])
-% xlim([0 0])
-grid on;
-title('Rollrate');
-
-% Steer angle and rate
-figure();
-
-subplot(2,1,1)
-hold on;
-plot(Results.refSteer_angle.Time(:,1),rad2deg(Results.refSteer_angle.Data(:,1)));
-plot(Results.trueSteer_angle.Time(:,1),rad2deg(Results.trueSteer_angle.Data(:,1)*sin(bike_params.lambda)));
-plot(Results.estimatedSteer_angle.Time(:,1),rad2deg(Results.estimatedSteer_angle.Data(:,1)));
-legend('refSteer angle','trueSteer angle e','estimatedSteer angle e')
-xlabel('Time [t]')
-ylabel('Angle [Deg]')
-% ylim([-3 3])
-% xlim([0 0])
-grid on
-title('Steer angle')
-
-subplot(2,1,2)
-plot(Results.steer_rate.Time(:,1),rad2deg(Results.steer_rate.Data(:,1)))
-xlabel('Time [t]')
-ylabel('Angle [Deg/s]')
-% ylim([-3 3])
-% xlim([0 0])
-grid on
-title('Steer rate')
-
-% Ids and closest point index
-figure();
-hold on
-plot(Results.closest_point.Time,Results.closest_point.Data)
-plot(Results.ids.Time,Results.ids.Data)
-legend('Closest index', 'ids')
-xlabel('Iteration [-]')
-ylabel('Index [-]')
-% ylim([-3 3])
-% xlim([0 0])
-grid on
-title('Closes+ids')
-
-% Lateral and heading errors
-figure();
-
-subplot(1,2,1)
-plot(Results.error1.Time,Results.error1.Data) 
-xlabel('Time [s]')
-ylabel('Distance [m]')
-grid on
-title('Lateral error')
-
-subplot(1,2,2)
-plot(Results.error2.Time,rad2deg(Results.error2.Data))
-xlabel('Time [s]')
-ylabel('Angle [Deg]')
-grid on
-title('Heading error')
+%name of the plot
+Tnumber = 'No test case: General simulation run';
+        traj_plot.ymin = -100;
+        traj_plot.ymax = 100;
+        traj_plot.xmin = -150;
+        traj_plot.xmax = 150;
+        Plot_bikesimulation_results(Tnumber, Results, bike_params, traj_plot, Ts);
 
 end
 
@@ -541,6 +419,10 @@ function Parameters = LoadBikeParameters(bike)
         Parameters.IMU_height = 0.45;      % IMU height [m]
         Parameters.m = 45;                 % Bike mas [kg]
         Parameters.uneven_mass = false;    % true = use uneven mass distribution in bike model ; 0 = do not use
+        Parameters.Xgps = 0.2;             % GPS position offset X [m]
+        Parameters.Ygps = 0.2;             % GPS position offset Y [m]
+        Parameters.Ximu = 0.00;            % IMU position offset X [m]
+        Parameters.Yimu = 0.00;            % IMU position offset Y [m]
     elseif strcmp(bike,'black')
         % Black bike
         Parameters.inertia_front = 0.245;  %[kg.m^2] inertia of the front wheel
@@ -552,6 +434,10 @@ function Parameters = LoadBikeParameters(bike)
         Parameters.m = 31.3;               % Bike mass [kg]
         Parameters.lambda = deg2rad(66);   % angle of the fork axis [deg]  !!! TO BE MEASURED
         Parameters.uneven_mass = false;    % true = use uneven mass distribution in bike model ; 0 = do not use
+        Parameters.Xgps = 0.2;             % GPS position offset X [m]
+        Parameters.Ygps = 0.2;             % GPS position offset Y [m]
+        Parameters.Ximu = 0.00;            % IMU position offset X [m]
+        Parameters.Yimu = 0.00;            % IMU position offset Y [m]
     end
 end
 

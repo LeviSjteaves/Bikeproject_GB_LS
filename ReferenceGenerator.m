@@ -1,5 +1,5 @@
 function [Xref,Yref,Psiref] = ReferenceGenerator(type,ref_dis,N,scale)
-
+% look at choice t, define N, ref_dis
     switch type
         case 'sharp_turn'
             t = (0:(N-1))*ref_dis;
@@ -30,7 +30,8 @@ function [Xref,Yref,Psiref] = ReferenceGenerator(type,ref_dis,N,scale)
             psiref=[psiref(1) psiref];
 
         case 'infinite'
-            t = (0:(N-1))*ref_dis;
+%           t = [(0:(N-1))*ref_dis];
+            t = [(0:(N-1))*ref_dis; (0:(N-1))*2*ref_dis];
             xref = scale*cos(t);
             yref = scale*sin(2*t) / 2;
             psiref=atan2(yref(2:N)-yref(1:N-1),xref(2:N)-xref(1:N-1)); 

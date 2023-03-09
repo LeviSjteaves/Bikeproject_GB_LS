@@ -121,4 +121,6 @@ end
 
 
 
-
+% dlqe function
+% [Kalman_gain2, P2, Z,E] = dlqe(A_d,eye(7),C2,Q,R2);
+% Kalman_gain2 = A_d * Kalman_gain2;
