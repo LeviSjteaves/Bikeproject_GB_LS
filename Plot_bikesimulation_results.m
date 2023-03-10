@@ -34,9 +34,9 @@ title('Heading error')
 subplot(3,2,6)
 hold on
 plot(Results.ids.Time,Results.ids.Data)
-plot(Results.closest_point.Time,Results.closest_point.Data)
-plot(Results.closestpoint_heading.Time,Results.closestpoint_heading.Data)
-legend( 'Selected point index','New closest detected')
+plot(Results.closest_point.Time,Results.closest_point.Data-1)
+plot(Results.closestpoint_heading.Time,Results.closestpoint_heading.Data-2)
+legend( 'Selected idx Total','Selected idx in local','Selected idx for heading')
 xlabel('Time [s]')
 ylabel('Index [-]')
 grid on

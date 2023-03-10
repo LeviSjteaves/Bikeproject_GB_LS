@@ -18,7 +18,7 @@ clc;
     % Sampling Time
         Ts = 0.01; 
     % Horizon distance [m]
-        hor_dis = 1;
+        hor_dis = 3;
     % Constant Speed [m/s]
         v = 3;    
 
@@ -53,12 +53,11 @@ clc;
 % SHAPE options: sharp_turn, line, infinite, circle, ascent_sin, smooth_curve
 type = 'infinite';
 % Distance between points
-ref_dis = 0.5;
-
+ref_dis = 0.05;
 % Number# of reference points
-N = 13; 
+N = 100; 
 % Scale (only for infinite and circle)
-scale = 75; 
+scale = 50; 
 
 [Xref,Yref,Psiref] = ReferenceGenerator(type,ref_dis,N,scale);
 test_curve=[Xref,Yref,Psiref];
