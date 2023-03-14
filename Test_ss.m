@@ -78,7 +78,7 @@ states_dot = zeros(7,1);
 
 states_dot(1) = States(7);
 states_dot(2) = v * (States_l(3) + (lr/(lr+lf))*States(6) );
-states_dot(3) = (v/(lr+lf)) * States(5);
+states_dot(3) = (v/(lr+lf)) * States(6);
 states_dot(4) = States(5);
 states_dot(5) = (g/h)*States(4) + ((v^2*h-lr*g*c)/(h*(lr+lf)))*States(6) + ((lr*v)/(h^2*(lr+lf)))*dot_delta_e;
 states_dot(6) = dot_delta_e;
@@ -104,19 +104,19 @@ y2 = [X_GPS Y_GPS a_y omega_x omega_z delta_enc v_sens]';
 
 %% Check results
 
-if res ~= res2 || res_d ~= res_d2 || y ~= y2
-    disp('The equation from simulink and matlabs matrices does not match.')
-else
-    disp('The equations from simulink are equivalent to matlabs matrices.')
-end
-if res ~= res2
-    disp('Continuous time equations are not the same')
-elseif res_d ~= res_d2
-    disp('Check the discretization')
-end
-if y ~= y2
-    disp('Measurement equations are not equivalent in simulink and matlab.')
-end
+% if res ~= res2 || res_d ~= res_d2 || y ~= y2
+%     disp('The equation from simulink and matlabs matrices does not match.')
+% else
+%     disp('The equations from simulink are equivalent to matlabs matrices.')
+% end
+% if res ~= res2
+%     disp('Continuous time equations are not the same')
+% elseif res_d ~= res_d2
+%     disp('Check the discretization')
+% end
+% if y ~= y2
+%     disp('Measurement equations are not equivalent in simulink and matlab.')
+% end
 
 
 

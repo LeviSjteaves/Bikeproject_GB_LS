@@ -54,13 +54,13 @@ clc;
 %% Reference trajectory generation
 
 % SHAPE options: sharp_turn, line, infinite, circle, ascent_sin, smooth_curve
-type = 'test';
+type = 'infinite';
 % Distance between points
-ref_dis = 0.1;
+ref_dis = 0.01;
 % Number# of reference points
-N = 20; 
+N = 500; 
 % Scale (only for infinite and circle)
-scale = 100; 
+scale = 50; 
 
 [Xref,Yref,Psiref] = ReferenceGenerator(type,ref_dis,N,scale);
 test_curve=[Xref,Yref,Psiref];
