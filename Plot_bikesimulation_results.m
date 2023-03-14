@@ -1,12 +1,12 @@
-function [] = Plot_bikesimulation_results(Tnumber, test_curve,Results, bike_params, traj_plot, Ts)
+function [] = Plot_bikesimulation_results(Tnumber, Ts, test_curve, Results, bike_params)
 
 % Trajectory
 figure('Name',Tnumber);
 subplot(3,2,[1,3,5]);
 hold on;
-plot3(test_curve(:,1),test_curve(:,2),1:length(test_curve(:,1)));
-plot3(Results.trueX.Data(:,1),Results.trueY.Data(:,1),Results.trueX.Time(:,1));
-plot3(Results.estimatedX.Data(:,1),Results.estimatedY.Data(:,1),Results.estimatedY.Time(:,1));
+plot3(test_curve(:,1),test_curve(:,2),1:length(test_curve(:,1)),'o');
+plot3(Results.trueX.Data(:,1),Results.trueY.Data(:,1),Results.trueX.Time(:,1),'o');
+plot3(Results.estimatedX.Data(:,1),Results.estimatedY.Data(:,1),Results.estimatedY.Time(:,1),'o');
 view(0,90)
 legend('Ref','True', 'Estimated');
 xlabel('X-dir [m]');
@@ -25,7 +25,9 @@ ylabel('Distance [m]')
 title('Lateral error')
 
 subplot(3,2,4)
+hold on
 plot(Results.error2.Time,rad2deg(Results.error2.Data))
+% plot(Results.dpsiref_steer.Time,rad2deg(Results.dpsiref_steer.Data))
 xlabel('Time [s]')
 ylabel('Angle [deg]')
 grid on
@@ -74,9 +76,9 @@ title('Y-coordinate');
 
 subplot(3,2,5)
 hold on;
-plot(Results.refPsi.Time(:,1),rad2deg(Results.refPsi.Data(:,1)));
-plot(Results.truePsi.Time(:,1),rad2deg(Results.truePsi.Data(:,1)));
-plot(Results.estimatedPsi.Time(:,1),rad2deg(Results.estimatedPsi.Data(:,1)));
+plot(Results.refPsi.Time(:,1),rad2deg(Results.refPsi.Data(:,1)),'o');
+plot(Results.truePsi.Time(:,1),rad2deg(Results.truePsi.Data(:,1)),'o');
+plot(Results.estimatedPsi.Time(:,1),rad2deg(Results.estimatedPsi.Data(:,1)),'o');
 legend('Ref psi','True psi','Estimated psi');
 xlabel('Time [t]');
 ylabel('Angle [Deg]');
@@ -131,11 +133,12 @@ title('Steer angle')
 figure()
 y = fft(Results.steer_rate.Data(:,1));
 fs = 1/Ts;
-f = (0:length(y)-1)*fs/length(y);
-plot(f,abs(y))
+n = length(Results.steer_rate.Data(:,1));
+fshift = (-n/2:n/2-1)*(fs/n);
+yshift = fftshift(y);
+plot(fshift,abs(yshift))
 xlabel('Frequency (Hz)')
 ylabel('Magnitude')
-title('Magnitude Steerrate')
 
 
 end

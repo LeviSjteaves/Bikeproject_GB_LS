@@ -29,19 +29,26 @@ function [Xref,Yref,Psiref] = ReferenceGenerator(type,ref_dis,N,scale)
             t = (0:(N-1))*ref_dis;
             xref = scale*cos(t);
             yref = scale*sin(2*t) / 2;
-            psiref=atan2(yref(2:N)-yref(1:N-1),xref(2:N)-xref(1:N-1)); 
+            psiref =atan2(yref(2:N)-yref(1:N-1),xref(2:N)-xref(1:N-1)); 
             
         case 'ascent_sin'
-            t = (0:(N-1));
+            t = (0:(N-1))*ref_dis;
             xref = t*ref_dis;
             yref = 8*sin(0.02*t+0.0004*t.*t);
             psiref=atan2(yref(2:N)-yref(1:N-1),xref(2:N)-xref(1:N-1)); 
         case 'wiggle'
-            A = 5;
+            Amp = 10;
+            fre = 0.01;
             t = (0:(N-1));
-            xref = t;
-            yref = A*sin(0.02*t+0.0004*t.*t);
+            xref = t*ref_dis;
+            yref = Amp*sin(fre*t);
             psiref=atan2(yref(2:N)-yref(1:N-1),xref(2:N)-xref(1:N-1));
+        case 'test'
+            t = (0:(N-1))*ref_dis;
+            xref = t;
+            yref = [0 0 0 0 0 0 0 1 1 1 1 1 1 1];
+            psiref=atan2(yref(2:N)-yref(1:N-1),xref(2:N)-xref(1:N-1)); 
+
     end
     
     Xref=xref';%change row into column

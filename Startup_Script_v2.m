@@ -14,11 +14,14 @@ clc;
     % Name of the model
         model = 'Main_v2';
     % Simulation time
-        sim_time = 100;
+        sim_time = 300;
     % Sampling Time
         Ts = 0.01; 
+    % First closest point selection in reference 
+    % Starts at 2d because the one before closest is in the local reference as well
+        ref_start_idx = 2;
     % Horizon distance [m]
-        hor_dis = 3;
+        hor_dis = 1;
     % Constant Speed [m/s]
         v = 3;    
 
@@ -27,7 +30,7 @@ clc;
 % Choose the solver
     set_param(model,'AlgebraicLoopSolver','TrustRegion');
 % Choose The Bike - Options: 'red' or 'black'
-    bike = 'black';
+    bike = 'red';
 % Load the parameters of the specified bicycle
     bike_params = LoadBikeParameters(bike); 
 % bike model
@@ -51,13 +54,13 @@ clc;
 %% Reference trajectory generation
 
 % SHAPE options: sharp_turn, line, infinite, circle, ascent_sin, smooth_curve
-type = 'infinite';
+type = 'test';
 % Distance between points
-ref_dis = 0.05;
+ref_dis = 0.1;
 % Number# of reference points
-N = 100; 
+N = 20; 
 % Scale (only for infinite and circle)
-scale = 50; 
+scale = 100; 
 
 [Xref,Yref,Psiref] = ReferenceGenerator(type,ref_dis,N,scale);
 test_curve=[Xref,Yref,Psiref];
@@ -183,6 +186,7 @@ C1 = [1 0 0 0 0 0 0;
      0 0 0 0 0 (v*sin(lambda))/b 0;
      0 0 0 0 0 1 0;
      0 0 0 0 0 0 1];
+
 % Without GPS
 C2 = [g-((h_imu*g)/h) 0 (-h_imu*(h*v^2-(g*a*c))*sin(lambda))/(b*h^2) + (v^2*sin(lambda))/b 0;
       0 1 0 0;
@@ -251,11 +255,7 @@ end
 %% Ploting
 %name of the plot
 Tnumber = 'No test case: General simulation run';
-        traj_plot.ymin = -100;
-        traj_plot.ymax = 100;
-        traj_plot.xmin = -150;
-        traj_plot.xmax = 150;
-        Plot_bikesimulation_results(Tnumber, test_curve, Results, bike_params, traj_plot, Ts);
+        Plot_bikesimulation_results(Tnumber, Ts, test_curve, Results, bike_params);
 
 end
 
@@ -381,32 +381,20 @@ if Run_tests == 1
     close all
     %Test case 1
     Tnumber = 'Test case 1: Sparse infinite';
-        traj_plot.ymin = -100;
-        traj_plot.ymax = 100;
-        traj_plot.xmin = -150;
-        traj_plot.xmax = 150;
-        Plot_bikesimulation_results(Tnumber, Results1, bike_params, traj_plot, Ts);
+
+        Plot_bikesimulation_results(Tnumber, Ts, test_curve, Results1, bike_params);
     %Test case 2 
     Tnumber = 'Test case 2: Large offset';
-        traj_plot.ymin = -10;
-        traj_plot.ymax = 10;
-        traj_plot.xmin = 0;
-        traj_plot.xmax = 100;
-        Plot_bikesimulation_results(Tnumber, Results2, bike_params, traj_plot, Ts);
+ 
+        Plot_bikesimulation_results(Tnumber, Ts, test_curve, Results2, bike_params);
     %Test case 3    
     Tnumber = 'Test case 3: Small circle';
-        traj_plot.ymin = 24;
-        traj_plot.ymax = 36;
-        traj_plot.xmin = -5;
-        traj_plot.xmax = 5;
-        Plot_bikesimulation_results(Tnumber, Results3, bike_params, traj_plot, Ts);
+     
+        Plot_bikesimulation_results(Tnumber, Ts, test_curve, Results3, bike_params);
     %Test case 4 
     Tnumber = 'Test case 4: Sharp turn';
-        traj_plot.ymin = -10;
-        traj_plot.ymax = 50;
-        traj_plot.xmin = 0;
-        traj_plot.xmax = 120;
-        Plot_bikesimulation_results(Tnumber, Results4, bike_params, traj_plot, Ts);
+
+        Plot_bikesimulation_results(Tnumber, Ts, test_curve, Results4, bike_params);
 
 end
 
@@ -416,6 +404,7 @@ function Parameters = LoadBikeParameters(bike)
 
     if strcmp(bike,'red')
         % Red bike
+ % real parameters and positions on bike
         Parameters.inertia_front = 0.245;  %[kg.m^2] inertia of the front wheel
         Parameters.r_wheel = 0.311;        % radius of the wheel
         Parameters.h = 0.2085 + Parameters.r_wheel;   % height of center of mass [m]
@@ -423,15 +412,37 @@ function Parameters = LoadBikeParameters(bike)
         Parameters.c = 0.06;               % length between front wheel contact point and the extention of the fork axis [m]
         Parameters.lambda = deg2rad(70);   % angle of the fork axis [deg]
         Parameters.a = 0.4964;             % distance from rear wheel to frame's center of mass [m]
-        Parameters.IMU_height = 0.45;      % IMU height [m]
+        Parameters.IMU_height = 0.215;      % IMU height [m]
         Parameters.m = 45;                 % Bike mas [kg]
+        Parameters.Xgps = 0.0;             % Actual GPS position offset X (measured from middlepoint position parralel to bike heading) [m]
+        Parameters.Ygps = 0.0;             % Actual GPS position offset Y (measured from middlepoint position perpendicular to bike heading) [m]
+        Parameters.Hgps = 0.0;             % GPS position height (measured from the groud to the GPS)   [m]
+        Parameters.Ximu = 0.0;            % IMU position offset X [m]
+        Parameters.Yimu = 0.0;            % IMU position offset Y [m]
+       
+        % Parameters in the model
+        Parameters.inertia_front_mod = 0.245;  %[kg.m^2] inertia of the front wheel
+        Parameters.r_wheel_mod = 0.311;        % radius of the wheel
+        Parameters.h_mod = 0.2085 + Parameters.r_wheel_mod;   % height of center of mass [m]
+        Parameters.b_mod = 1.095;              % length between wheel centers [m]
+        Parameters.c_mod = 0.06;               % length between front wheel contact point and the extention of the fork axis [m]
+        Parameters.lambda_mod = deg2rad(70);   % angle of the fork axis [deg]
+        Parameters.a_mod = 0.4964;             % distance from rear wheel to frame's center of mass [m]
+        Parameters.IMU_height_mod = 0.215;      % IMU height [m]
+        Parameters.m_mod = 45;                 % Bike mas [kg]
+        Parameters.Xgps_mod = 0.0;            % GPS position X accoarding to the model [m] 
+        Parameters.Ygps_mod = 0.0;            % GPS position Y accoarding to the model [m]
+        Parameters.Hgps_mod = 0.0;              % GPS position height accoarding to the model   [m]
+        Parameters.Ximu_mod = 0.0;            % IMU position offset X [m]
+        Parameters.Yimu_mod = 0.0;            % IMU position offset Y [m]
+
+        %
         Parameters.uneven_mass = false;    % true = use uneven mass distribution in bike model ; 0 = do not use
-        Parameters.Xgps = 0.2;             % GPS position offset X [m]
-        Parameters.Ygps = 0.2;             % GPS position offset Y [m]
-        Parameters.Ximu = 0.00;            % IMU position offset X [m]
-        Parameters.Yimu = 0.00;            % IMU position offset Y [m]
+
     elseif strcmp(bike,'black')
         % Black bike
+
+        % Parameters on bike (actual measured)
         Parameters.inertia_front = 0.245;  %[kg.m^2] inertia of the front wheel
         Parameters.h = 0.534 ;             % height of center of mass [m]
         Parameters.b = 1.15;               % length between wheel centers [m]
@@ -440,11 +451,30 @@ function Parameters = LoadBikeParameters(bike)
         Parameters.IMU_height = 0.215;     % IMU height [m]
         Parameters.m = 31.3;               % Bike mass [kg]
         Parameters.lambda = deg2rad(66);   % angle of the fork axis [deg]  !!! TO BE MEASURED
+        Parameters.Xgps = 0.0;             % Actual GPS position offset X (measured from middlepoint position parralel to bike heading) [m]
+        Parameters.Ygps = 0.0;             % Actual GPS position offset Y (measured from middlepoint position perpendicular to bike heading) [m]
+        Parameters.Hgps = 0.0;             % GPS position height (measured from the groud to the GPS)   [m]
+        Parameters.Ximu_mod = 0.0;             % IMU position offset X [m]
+        Parameters.Yimu_mod = 0.0;             % IMU position offset Y [m]
+
+        % Parameters in model 
+        Parameters.inertia_front_mod = 0.245;  %[kg.m^2] inertia of the front wheel
+        Parameters.h_mod = 0.534 ;             % height of center of mass [m]
+        Parameters.b_mod = 1.15;               % length between wheel centers [m]
+        Parameters.a_mod = 0.6687;             % distance from rear wheel to frame's center of mass [m]
+        Parameters.c_mod = 0.06;               % length between front wheel contact point and the extention of the fork axis [m]
+        Parameters.IMU_height_mod = 0.215;     % IMU height [m]
+        Parameters.m_mod = 31.3;               % Bike mass [kg]
+        Parameters.lambda_mod = deg2rad(66);   % angle of the fork axis [deg]  !!! TO BE MEASURED
+        Parameters.Xgps_mod = 0.0;            % GPS position X accoarding to the model [m] 
+        Parameters.Ygps_mod = 0.0;            % GPS position Y accoarding to the model [m]
+        Parameters.Hgps_mod = 0.0;              % GPS position height accoarding to the model [m]
+        Parameters.Ximu_mod = 0.0;             % IMU position offset X [m]
+        Parameters.Yimu_mod = 0.0;             % IMU position offset Y [m]
+
+        %
         Parameters.uneven_mass = false;    % true = use uneven mass distribution in bike model ; 0 = do not use
-        Parameters.Xgps = 0.2;             % GPS position offset X [m]
-        Parameters.Ygps = 0.2;             % GPS position offset Y [m]
-        Parameters.Ximu = 0.00;            % IMU position offset X [m]
-        Parameters.Yimu = 0.00;            % IMU position offset Y [m]
+         
     end
 end
 
