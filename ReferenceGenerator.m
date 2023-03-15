@@ -46,7 +46,7 @@ function [Xref,Yref,Psiref] = ReferenceGenerator(type,ref_dis,N,scale)
         case 'test'
             t = (0:(N-1))*ref_dis;
             dis = 1;
-            y= 0.5;
+            y= 1;
             xref = dis*[1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20];
             yref = [0 0 0 0 0 0 0 0 0.333*y 0.666*y y y y y y y y y y y];
             psiref=atan2(yref(2:N)-yref(1:N-1),xref(2:N)-xref(1:N-1)); 

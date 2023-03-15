@@ -5,8 +5,8 @@ figure('Name',Tnumber);
 subplot(3,2,[1,3,5]);
 hold on;
 plot3(test_curve(:,1),test_curve(:,2),1:length(test_curve(:,1)),'o');
-plot3(Results.trueX.Data(:,1),Results.trueY.Data(:,1),Results.trueX.Time(:,1),'o');
-plot3(Results.estimatedX.Data(:,1),Results.estimatedY.Data(:,1),Results.estimatedY.Time(:,1),'o');
+plot3(Results.trueX.Data(:,1),Results.trueY.Data(:,1),Results.trueX.Time(:,1));
+plot3(Results.estimatedX.Data(:,1),Results.estimatedY.Data(:,1),Results.estimatedY.Time(:,1));
 view(0,90)
 legend('Ref','True', 'Estimated');
 xlabel('X-dir [m]');
@@ -76,9 +76,9 @@ title('Y-coordinate');
 
 subplot(3,2,5)
 hold on;
-plot(Results.refPsi.Time(:,1),rad2deg(Results.refPsi.Data(:,1)),'o');
-plot(Results.truePsi.Time(:,1),rad2deg(Results.truePsi.Data(:,1)),'o');
-plot(Results.estimatedPsi.Time(:,1),rad2deg(Results.estimatedPsi.Data(:,1)),'o');
+plot(Results.refPsi.Time(:,1),rad2deg(Results.refPsi.Data(:,1)));
+plot(Results.truePsi.Time(:,1),rad2deg(Results.truePsi.Data(:,1)));
+plot(Results.estimatedPsi.Time(:,1),rad2deg(Results.estimatedPsi.Data(:,1)));
 legend('Ref psi','True psi','Estimated psi');
 xlabel('Time [t]');
 ylabel('Angle [Deg]');

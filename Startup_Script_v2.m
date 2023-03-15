@@ -56,11 +56,11 @@ clc;
 % SHAPE options: sharp_turn, line, infinite, circle, ascent_sin, smooth_curve
 type = 'infinite';
 % Distance between points
-ref_dis = 0.01;
+ref_dis = 0.05;
 % Number# of reference points
-N = 500; 
+N = 120; 
 % Scale (only for infinite and circle)
-scale = 50; 
+scale = 40; 
 
 [Xref,Yref,Psiref] = ReferenceGenerator(type,ref_dis,N,scale);
 test_curve=[Xref,Yref,Psiref];
@@ -73,7 +73,7 @@ Output_reference_test = referenceTest(test_curve,hor_dis,Ts,initial_pose,v, ref_
 
 %update initial states if offset is detected
 initial_state.x = Output_reference_test(1);
-initial_state.y = Output_reference_test(2);
+initial_state.y = Output_reference_test(2)+2;
 initial_state.heading = Output_reference_test(3);
 initial_pose = [initial_state.x; initial_state.y; initial_state.heading];
 initial_state_estimate = initial_state;
