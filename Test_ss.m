@@ -13,7 +13,7 @@ m = 31.3;
 g = 9.81;
 h_imu = 0.215;
 
-lr = b; % distance from rear wheel center to center of mass
+lr = a; % distance from rear wheel center to center of mass
 lf = b-a; % distance from front wheen center to center of mass
 
 % States in global frame
@@ -32,7 +32,7 @@ States_l(7) = States(7);
 
 % Input value (= 0  if A wants to be tested, != if Ax+Bu wants to be
 % tested)
-dot_delta_e = 2;
+dot_delta_e = 1;
 
 %% Matlab script to obtain Kalman gain
 
@@ -66,7 +66,8 @@ res = A*States_l + B*dot_delta_e;
 
 % Discrete update
 A_d = (eye(size(A))+Ts*A);
-res_d = A_d*States_l + B*dot_delta_e;
+B_d = Ts*B;
+res_d = A_d*States_l + B_d*dot_delta_e;
 
 % Measurement update
 y = C*States_l + D*dot_delta_e;
@@ -117,8 +118,6 @@ y2 = [X_GPS Y_GPS a_y omega_x omega_z delta_enc v_sens]';
 % if y ~= y2
 %     disp('Measurement equations are not equivalent in simulink and matlab.')
 % end
-
-
 
 
 % dlqe function

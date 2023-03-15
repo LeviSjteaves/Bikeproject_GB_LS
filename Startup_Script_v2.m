@@ -200,6 +200,7 @@ D2 = [(-h_imu*a*v*sin(lambda))/(b*h) 0 0 0 0]';
 
 % Transform to state space model
 A_d = (eye(size(A))+Ts*A);
+B_d = Ts*B;
 
 % Q and R matrix
 Q = eye(7);
