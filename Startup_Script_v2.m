@@ -171,13 +171,6 @@ A = [0 0 0 0 0 0 1;
 % B matrix (linear bicycle model with constant velocity)
 B = [0 0 0 0 ((lr*v)/(h^2*(lr+lf))) 1 0]';
 
-% C and D matrix (measurement model)
-% C = eye(7);
-% C(1:end,3) = 0; 
-% C(3,:) = [];
-% D = zeros(7,1);
-% D(7,:) = [];
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Including GPS
 C1 = [1 0 0 0 0 0 0;
      0 1 0 0 0 0 0;
@@ -187,18 +180,18 @@ C1 = [1 0 0 0 0 0 0;
      0 0 0 0 0 1 0;
      0 0 0 0 0 0 1];
 
-% Without GPS
+D1 = [0 0 (-h_imu*a*v*sin(lambda))/(b*h) 0 0 0 0]';
+
+% Excluding GPS
 C2 = [g-((h_imu*g)/h) 0 (-h_imu*(h*v^2-(g*a*c))*sin(lambda))/(b*h^2) + (v^2*sin(lambda))/b 0;
       0 1 0 0;
       0 0 (v*sin(lambda))/b 0;
       0 0 1 0;
       0 0 0 1];
 
-
-D1 = [0 0 (-h_imu*a*v*sin(lambda))/(b*h) 0 0 0 0]';
 D2 = [(-h_imu*a*v*sin(lambda))/(b*h) 0 0 0 0]';
 
-% Transform to state space model
+% Discretize the model
 A_d = (eye(size(A))+Ts*A);
 B_d = Ts*B;
 
@@ -208,19 +201,21 @@ Q2 = eye(4);
 R1 = eye(7);
 R2 = eye(5);
 
-% idare function
-%including GPS
-[P1,Kalman_gain1,eig] = idare(A_d',C1',Q,R1,[],[]);
-eig1 = abs(eig);
-Kalman_gain1 = Kalman_gain1';
+% Compute Kalman Gain
+    % including GPS
+    [P1,Kalman_gain1,eig] = idare(A_d',C1',Q,R1,[],[]);
+    eig1 = abs(eig);
+    Kalman_gain1 = Kalman_gain1';
+    Ts_GPS = 0.1; % sampling rate of the GPS
+    counter = (Ts_GPS / Ts) - 1 ; % Upper limit of the counter for activating the flag
 
-%without GPS
-A_d2 = A_d;
-A_d2(1:3,:) = [];
-A_d2(:,1:3) = [];
-[P2,Kalman_gain2,eig] = idare(A_d2',C2',Q2,R2,[],[]);
-eig2 = abs(eig);
-Kalman_gain2 = Kalman_gain2';
+    % excluding GPS
+    A_d2 = A_d;
+    A_d2(1:3,:) = [];
+    A_d2(:,1:3) = [];
+    [P2,Kalman_gain2,eig] = idare(A_d2',C2',Q2,R2,[],[]);
+    eig2 = abs(eig);
+    Kalman_gain2 = Kalman_gain2';
 
 
 % Polish the kalman gain (values <10-5 are set to zero)
@@ -371,6 +366,7 @@ initial_state_estimate = initial_state;
 try Results4 = sim(model);
     catch error_details 
 end
+
 % Simulation Messages and Warnings
 if Results4.stop.Data(end) == 1
     disp('Message: End of the trajectory has been reached');
