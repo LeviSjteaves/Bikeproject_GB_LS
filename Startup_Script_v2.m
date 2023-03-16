@@ -18,7 +18,7 @@ clc;
     % Sampling Time
         Ts = 0.01; 
     % First closest point selection in reference 
-    % Starts at 2d because the one before closest is in the local reference as well
+    % Starts at 2 because the one before closest is in the local reference as well
         ref_start_idx = 2;
     % Horizon distance [m]
         hor_dis = 1;
@@ -73,7 +73,7 @@ Output_reference_test = referenceTest(test_curve,hor_dis,Ts,initial_pose,v, ref_
 
 %update initial states if offset is detected
 initial_state.x = Output_reference_test(1);
-initial_state.y = Output_reference_test(2)+2;
+initial_state.y = Output_reference_test(2);
 initial_state.heading = Output_reference_test(3);
 initial_pose = [initial_state.x; initial_state.y; initial_state.heading];
 initial_state_estimate = initial_state;
@@ -156,20 +156,20 @@ m = bike_params.m;
 h_imu = bike_params.IMU_height;
 
 % Notations of simulink
-lr = bike_params.b; % distance from rear wheel center to center of mass
-lf = bike_params.b-bike_params.a; % distance from front wheen center to center of mass
+lr = bike_params.a; % distance from rear wheel center to center of mass
+lf = bike_params.b-bike_params.a; % distance from front wheel center to center of mass
 
 % A matrix (linear bicycle model with constant velocity)
 A = [0 0 0 0 0 0 1;
      0 0 v 0 0 v*(lr/(lf+lr)) 0;
      0 0 0 0 0 (v/(lr+lf)) 0;
      0 0 0 0 1 0 0;
-     0 0 0 (g/h) 0 ((v^2*h-lr*g*c)/(h*(lr+lf))) 0;
+     0 0 0 (g/h) 0 ((v^2*h-lr*g*c)/(h^2*(lr+lf))) 0;
      0 0 0 0 0 0 0;
      0 0 0 0 0 0 0];
 
 % B matrix (linear bicycle model with constant velocity)
-B = [0 0 0 0 ((lr*v)/(h^2*(lr+lf))) 1 0]';
+B = [0 0 0 0 ((lr*v)/(h*(lr+lf))) 1 0]';
 
 % Including GPS
 C1 = [1 0 0 0 0 0 0;
@@ -180,8 +180,6 @@ C1 = [1 0 0 0 0 0 0;
      0 0 0 0 0 1 0;
      0 0 0 0 0 0 1];
 
-D1 = [0 0 (-h_imu*a*v*sin(lambda))/(b*h) 0 0 0 0]';
-
 % Excluding GPS
 C2 = [g-((h_imu*g)/h) 0 (-h_imu*(h*v^2-(g*a*c))*sin(lambda))/(b*h^2) + (v^2*sin(lambda))/b 0;
       0 1 0 0;
@@ -189,7 +187,8 @@ C2 = [g-((h_imu*g)/h) 0 (-h_imu*(h*v^2-(g*a*c))*sin(lambda))/(b*h^2) + (v^2*sin(
       0 0 1 0;
       0 0 0 1];
 
-D2 = [(-h_imu*a*v*sin(lambda))/(b*h) 0 0 0 0]';
+D1 = [0 0 (-h_imu*a*v)/(b*h) 0 0 0 0]';
+D2 = [(-h_imu*a*v)/(b*h) 0 0 0 0]';
 
 % Discretize the model
 A_d = (eye(size(A))+Ts*A);
@@ -234,7 +233,7 @@ for i = 1:size(Kalman_gain2,1)
     end
 end    
 
-%% Start the Simulation
+ %% Start the Simulation
 if Run_tests == 0
 
 tic
