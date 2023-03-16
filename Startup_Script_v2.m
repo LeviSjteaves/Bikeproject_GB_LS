@@ -14,7 +14,7 @@ clc;
     % Name of the model
         model = 'Main_v2';
     % Simulation time
-        sim_time = 300;
+        sim_time = 10;
     % Sampling Time
         Ts = 0.01; 
     % First closest point selection in reference 
@@ -56,7 +56,7 @@ clc;
 % SHAPE options: sharp_turn, line, infinite, circle, ascent_sin, smooth_curve
 type = 'infinite';
 % Distance between points
-ref_dis = 0.05;
+ref_dis = 0.01;
 % Number# of reference points
 N = 120; 
 % Scale (only for infinite and circle)
@@ -174,16 +174,16 @@ B = [0 0 0 0 ((lr*v)/(h*(lr+lf))) 1 0]';
 % Including GPS
 C1 = [1 0 0 0 0 0 0;
      0 1 0 0 0 0 0;
-     0 0 0 g-((h_imu*g)/h) 0 (-h_imu*(h*v^2-(g*a*c))*sin(lambda))/(b*h^2) + (v^2*sin(lambda))/b 0;
+     0 0 0 g-((h_imu*g)/h) 0 (-h_imu*(h*v^2-(g*a*c)))/(b*h^2) + (v^2)/b 0;
      0 0 0 0 1 0 0;
-     0 0 0 0 0 (v*sin(lambda))/b 0;
+     0 0 0 0 0 (v)/b 0;
      0 0 0 0 0 1 0;
      0 0 0 0 0 0 1];
 
 % Excluding GPS
-C2 = [g-((h_imu*g)/h) 0 (-h_imu*(h*v^2-(g*a*c))*sin(lambda))/(b*h^2) + (v^2*sin(lambda))/b 0;
+C2 = [g-((h_imu*g)/h) 0 (-h_imu*(h*v^2-(g*a*c)))/(b*h^2) + (v^2)/b 0;
       0 1 0 0;
-      0 0 (v*sin(lambda))/b 0;
+      0 0 (v)/b 0;
       0 0 1 0;
       0 0 0 1];
 
@@ -251,6 +251,32 @@ end
 %name of the plot
 Tnumber = 'No test case: General simulation run';
         Plot_bikesimulation_results(Tnumber, Ts, test_curve, Results, bike_params);
+
+figure()
+subplot(2,2,1);
+plot(Results.steerrate_bikemodel.Data(:,1))
+hold on
+plot(Results.steerrate_estimator.Data(:,1))
+title('steerrate deltadot')
+legend('true bikemodel','estimator')
+
+subplot(2,2,2);
+plot(Results.states_bikemodel.Data(:,1))
+hold on
+plot(Results.states_estimator.Data(:,4))
+title('Roll phi')
+
+subplot(2,2,3);
+plot(Results.states_bikemodel.Data(:,2))
+hold on
+plot(Results.states_estimator.Data(:,6))
+title('Steering angle delta')
+
+subplot(2,2,4);
+plot(Results.states_bikemodel.Data(:,3))
+hold on
+plot(Results.states_estimator.Data(:,5))
+title('Roll rate phidot')
 
 end
 
