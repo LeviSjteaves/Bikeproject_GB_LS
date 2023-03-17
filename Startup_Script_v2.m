@@ -10,11 +10,11 @@ clc;
 % General Parameters
 
     % Gravitational Acceleration
-        g = 9.81;
+        g = -9.81;
     % Name of the model
         model = 'Main_v2';
     % Simulation time
-        sim_time = 10;
+        sim_time = 50;
     % Sampling Time
         Ts = 0.01; 
     % First closest point selection in reference 
@@ -56,9 +56,9 @@ clc;
 % SHAPE options: sharp_turn, line, infinite, circle, ascent_sin, smooth_curve
 type = 'infinite';
 % Distance between points
-ref_dis = 0.01;
+ref_dis = 0.05;
 % Number# of reference points
-N = 120; 
+N = 100; 
 % Scale (only for infinite and circle)
 scale = 40; 
 
@@ -102,19 +102,19 @@ end
 %     C = [bike_params.a*v/(bike_params.b*bike_params.h) g*bike_params.inertia_front/(bike_params.h^3*bike_params.m)+v^2/(bike_params.b*bike_params.h)];
 %     D = [bike_params.inertia_front/(bike_params.h^2*bike_params.m)];
 
-% Observable Canonical Form
-    A = [0 g/bike_params.h ; 1 0];
-    B = [g*bike_params.inertia_front/(bike_params.h^3*bike_params.m)+(v^2./(bike_params.b*bike_params.h)-bike_params.a*bike_params.c*g/(bike_params.b*bike_params.h^2)).*sin(bike_params.lambda) ;
-        bike_params.a*v/(bike_params.b*bike_params.h).*sin(bike_params.lambda)];
-    C = [0 1];
-    D = [bike_params.inertia_front/(bike_params.h^2*bike_params.m)];
-
-% Linearized System
-    linearized_sys = ss(A,B,C,D);
-% Augmented System
-    fullstate_sys = ss(linearized_sys.A,linearized_sys.B,eye(size(linearized_sys.A)),0);
-% Discretized System
-    discretized_sys = c2d(linearized_sys,Ts);
+% % Observable Canonical Form
+%     A = [0 g/bike_params.h ; 1 0];
+%     B = [g*bike_params.inertia_front/(bike_params.h^3*bike_params.m)+(v^2./(bike_params.b*bike_params.h)-bike_params.a*bike_params.c*g/(bike_params.b*bike_params.h^2)).*sin(bike_params.lambda) ;
+%         bike_params.a*v/(bike_params.b*bike_params.h).*sin(bike_params.lambda)];
+%     C = [0 1];
+%     D = [bike_params.inertia_front/(bike_params.h^2*bike_params.m)];
+% 
+% % Linearized System
+%     linearized_sys = ss(A,B,C,D);
+% % Augmented System
+%     fullstate_sys = ss(linearized_sys.A,linearized_sys.B,eye(size(linearized_sys.A)),0);
+% % Discretized System
+%     discretized_sys = c2d(linearized_sys,Ts);
 
 %% Balancing Controller
 
@@ -160,35 +160,36 @@ lr = bike_params.a; % distance from rear wheel center to center of mass
 lf = bike_params.b-bike_params.a; % distance from front wheel center to center of mass
 
 % A matrix (linear bicycle model with constant velocity)
+% Est_States := [X Y psi phi phi_dot delta v]
 A = [0 0 0 0 0 0 1;
-     0 0 v 0 0 v*(lr/(lf+lr)) 0;
-     0 0 0 0 0 (v/(lr+lf)) 0;
+     0 0 v 0 0 v*(lr/(lf+lr))*sin(lambda) 0;
+     0 0 0 0 0 (v/(lr+lf))*sin(lambda) 0;
      0 0 0 0 1 0 0;
-     0 0 0 (g/h) 0 ((v^2*h-lr*g*c)/(h^2*(lr+lf))) 0;
+     0 0 0 (g/h) 0 ((v^2*h-lr*g*c)/(h^2*(lr+lf)))*sin(lambda) 0;
      0 0 0 0 0 0 0;
      0 0 0 0 0 0 0];
 
 % B matrix (linear bicycle model with constant velocity)
-B = [0 0 0 0 ((lr*v)/(h*(lr+lf))) 1 0]';
+B = [0 0 0 0 ((lr*v)/(h*(lr+lf)))*sin(lambda) 1 0]';
 
 % Including GPS
 C1 = [1 0 0 0 0 0 0;
      0 1 0 0 0 0 0;
-     0 0 0 g-((h_imu*g)/h) 0 (-h_imu*(h*v^2-(g*a*c)))/(b*h^2) + (v^2)/b 0;
+     0 0 0 g+((-h_imu*g)/h) 0 (-h_imu*(h*v^2-(g*a*c)))*sin(lambda)/(b*h^2) + (v^2)*sin(lambda)/b 0;
      0 0 0 0 1 0 0;
-     0 0 0 0 0 (v)/b 0;
+     0 0 0 0 0 (v)*sin(lambda)/b 0;
      0 0 0 0 0 1 0;
      0 0 0 0 0 0 1];
 
 % Excluding GPS
-C2 = [g-((h_imu*g)/h) 0 (-h_imu*(h*v^2-(g*a*c)))/(b*h^2) + (v^2)/b 0;
+C2 = [g+((-h_imu*g)/h) 0 (-h_imu*(h*v^2-(g*a*c)))*sin(lambda)/(b*h^2) + (v^2)*sin(lambda)/b 0;
       0 1 0 0;
-      0 0 (v)/b 0;
+      0 0 (v)*sin(lambda)/b 0;
       0 0 1 0;
       0 0 0 1];
 
-D1 = [0 0 (-h_imu*a*v)/(b*h) 0 0 0 0]';
-D2 = [(-h_imu*a*v)/(b*h) 0 0 0 0]';
+D1 = [0 0 (-h_imu*a*v)*sin(lambda)/(b*h) 0 0 0 0]';
+D2 = [(-h_imu*a*v)*sin(lambda)/(b*h) 0 0 0 0]';
 
 % Discretize the model
 A_d = (eye(size(A))+Ts*A);
@@ -231,7 +232,10 @@ for i = 1:size(Kalman_gain2,1)
             Kalman_gain2(i,j) = 0;
         end
     end
-end    
+end
+
+% put a_y gain to zero for debug
+% Kalman_gain1(4,3) = 0;
 
  %% Start the Simulation
 if Run_tests == 0
@@ -254,30 +258,30 @@ Tnumber = 'No test case: General simulation run';
 
 figure()
 subplot(2,2,1);
-plot(Results.steerrate_bikemodel.Data(:,1))
+plot(Results.steerrate_bikemodel.Time(:,1),Results.steerrate_bikemodel.Data(:,1))
 hold on
-plot(Results.steerrate_estimator.Data(:,1))
+plot(Results.steerrate_estimator.Time(:,1),Results.steerrate_estimator.Data(:,1))
 title('steerrate deltadot')
 legend('true bikemodel','estimator')
 
 subplot(2,2,2);
-plot(Results.states_bikemodel.Data(:,1))
+plot(Results.states_bikemodel.Time(:,1),Results.states_bikemodel.Data(:,1))
 hold on
-plot(Results.states_estimator.Data(:,4))
+plot(Results.states_estimator.Time(:,1),Results.states_estimator.Data(:,4))
 title('Roll phi')
-
+legend('true bikemodel','estimator')
 subplot(2,2,3);
-plot(Results.states_bikemodel.Data(:,2))
+plot(Results.states_bikemodel.Time(:,1),Results.states_bikemodel.Data(:,2))
 hold on
-plot(Results.states_estimator.Data(:,6))
+plot(Results.states_estimator.Time(:,1),Results.states_estimator.Data(:,6))
 title('Steering angle delta')
-
+legend('true bikemodel','estimator')
 subplot(2,2,4);
-plot(Results.states_bikemodel.Data(:,3))
+plot(Results.states_bikemodel.Time(:,1),Results.states_bikemodel.Data(:,3))
 hold on
-plot(Results.states_estimator.Data(:,5))
+plot(Results.states_estimator.Time(:,1),Results.states_estimator.Data(:,5))
 title('Roll rate phidot')
-
+legend('true bikemodel','estimator')
 end
 
 %% Test cases for validation

@@ -37,25 +37,24 @@ dot_delta_e = 1;
 %% Matlab script to obtain Kalman gain
 
 % A matrix (linear bicycle model with constant velocity)
+% Est_States := [X Y psi phi phi_dot delta v]
 A = [0 0 0 0 0 0 1;
-     0 0 v 0 0 v*(lr/(lf+lr)) 0;
-     0 0 0 0 0 (v/(lr+lf)) 0;
+     0 0 v 0 0 v*(lr/(lf+lr))*sin(lambda) 0;
+     0 0 0 0 0 (v/(lr+lf))*sin(lambda) 0;
      0 0 0 0 1 0 0;
-     0 0 0 (g/h) 0 ((v^2*h-lr*g*c)/(h*(lr+lf))) 0;
+     0 0 0 (g/h) 0 ((v^2*h-lr*g*c)/(h^2*(lr+lf)))*sin(lambda) 0;
      0 0 0 0 0 0 0;
      0 0 0 0 0 0 0];
 
 % B matrix (linear bicycle model with constant velocity)
-B = [0 0 0 0 ((lr*v)/(h^2*(lr+lf))) 1 0]';
+B = [0 0 0 0 ((lr*v)/(h*(lr+lf)))*sin(lambda) 1 0]';
 
-% C and D matrix (measurement model)
-% C = eye(7);
-% D = zeros(7,1);
+% Including GPS
 C = [1 0 0 0 0 0 0;
      0 1 0 0 0 0 0;
-     0 0 0 g-((h_imu*g)/h) 0 (-h_imu*(h*v^2-(g*a*c))*sin(lambda))/(b*h^2) + (v^2*sin(lambda))/b 0;
+     0 0 0 g+((-h_imu*g)/h) 0 (-h_imu*(h*v^2-(g*a*c)))*sin(lambda)/(b*h^2) + (v^2)*sin(lambda)/b 0;
      0 0 0 0 1 0 0;
-     0 0 0 0 0 (v*sin(lambda))/b 0;
+     0 0 0 0 0 (v)*sin(lambda)/b 0;
      0 0 0 0 0 1 0;
      0 0 0 0 0 0 1];
 
@@ -74,31 +73,33 @@ y = C*States_l + D*dot_delta_e;
 
 %% Copy from Simulink!!
 
-% Time update in local frame continuous
-states_dot = zeros(7,1);
+% the A matrix can be defined outside the loop
+    A = [0 0 0 0 0 0 1;
+         0 0 v 0 0 (v*lr/(lf+lr))*sin(lambda) 0;
+         0 0 0 0 0 (v/(lr+lf))*sin(lambda) 0;
+         0 0 0 0 1 0 0;
+         0 0 0 (g/h) 0 ((v^2*h-lr*g*c)/(h^2*(lr+lf)))*sin(lambda) 0;
+         0 0 0 0 0 0 0;
+         0 0 0 0 0 0 0];
+    
+    % B matrix (linear bicycle model with constant velocity)
+    B = [0 0 0 0 ((lr*v)/(h*(lr+lf)))*sin(lambda) 1 0]';
+    
+    % Discretization
+    A_d = (eye(size(A))+Ts*A);
+    B_d = Ts*B;
 
-states_dot(1) = States(7);
-states_dot(2) = v * (States_l(3) + (lr/(lr+lf))*States(6) );
-states_dot(3) = (v/(lr+lf)) * States(6);
-states_dot(4) = States(5);
-states_dot(5) = (g/h)*States(4) + ((v^2*h-lr*g*c)/(h*(lr+lf)))*States(6) + ((lr*v)/(h^2*(lr+lf)))*dot_delta_e;
-states_dot(6) = dot_delta_e;
-states_dot(7) = 0;
+    % Time update
+     res_d2= A_d*States_l + B_d*dot_delta_e;
 
-% Measurement update
-X_GPS       = States_l(1);  
-Y_GPS       = States_l(2);
-a_y         = States_l(6)*((-h_imu*(h*v^2-(g*a*c))*sin(lambda)/(b*h^2))+((v^2*sin(lambda))/(b))) + States_l(4)*(g-((h_imu*g)/(h)))+ (-h_imu*a*v*sin(lambda)/(b*h))*dot_delta_e;
-omega_x     = States_l(5);
-omega_z     = States_l(6)*(v*sin(lambda))/(b);
-delta_enc   = States_l(6);
-v_sens      = States_l(7);
-
-% Continuous update
- res2 = states_dot;
-
-% Discrete time update
-res_d2 = States_l + states_dot * Ts;
+ % C matrix for measurements predicted measurement (Cx)
+            X_GPS       = States_l(1);  
+            Y_GPS       = States_l(2);
+            a_y         = States_l(6)*sin(lambda)*((-h_imu*(h*v^2-(g*a*c))/(b*h^2))+((v^2)/(b))) + States_l(4)*(g+((-h_imu*g)/(h))) + (-h_imu*a*v/(b*h))*dot_delta_e*sin(lambda);
+            omega_x     = States_l(5);
+            omega_z     = States_l(6)*sin(lambda)*(v/b);
+            delta_enc   = States_l(6);
+            v_sens      = States_l(7);
 
 % Measurement
 y2 = [X_GPS Y_GPS a_y omega_x omega_z delta_enc v_sens]';
