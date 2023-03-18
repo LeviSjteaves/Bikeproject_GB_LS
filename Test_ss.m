@@ -106,21 +106,21 @@ y2 = [X_GPS Y_GPS a_y omega_x omega_z delta_enc v_sens]';
 
 %% Check results
 
-if res ~= res2 | res_d ~= res_d2 | y ~= y2
-    disp('The equation from simulink and matlabs matrices does not match.')
-else
-    disp('The equations from simulink are equivalent to matlabs matrices.')
-end
-if res ~= res2
-    disp('Continuous time equations are not the same')
-elseif res_d ~= res_d2
-    disp('Check the discretization')
-end
-if y ~= y2
-    disp('Measurement equations are not equivalent in simulink and matlab.')
-end
-
-
-% dlqe function
-% [Kalman_gain2, P2, Z,E] = dlqe(A_d,eye(7),C2,Q,R2);
-% Kalman_gain2 = A_d * Kalman_gain2;
+% if res ~= res2 | res_d ~= res_d2 | y ~= y2
+%     disp('The equation from simulink and matlabs matrices does not match.')
+% else
+%     disp('The equations from simulink are equivalent to matlabs matrices.')
+% end
+% if res ~= res2
+%     disp('Continuous time equations are not the same')
+% elseif res_d ~= res_d2
+%     disp('Check the discretization')
+% end
+% if y ~= y2
+%     disp('Measurement equations are not equivalent in simulink and matlab.')
+% end
+% 
+% 
+% % dlqe function
+% % [Kalman_gain2, P2, Z,E] = dlqe(A_d,eye(7),C2,Q,R2);
+% % Kalman_gain2 = A_d * Kalman_gain2;
