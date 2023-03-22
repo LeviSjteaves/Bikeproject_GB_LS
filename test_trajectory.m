@@ -1,4 +1,4 @@
-function  Create_trajectory()
+function  test_trajectory()
 % Create a GUI with buttons to plot different shapes, set their initial positions,
 % and save their data
 clc;
@@ -10,6 +10,9 @@ default_n = 100;
 default_scale = 1;
 default_x = 0;
 default_y = 0;
+default_head = 90;
+trajectory = [0;0];
+
 
         filename = 'trajectory.txt';
        %save_data(filename, x, y)
@@ -20,46 +23,107 @@ figure('Name','GUI','Position', [50, 100, 500, 500]);
 % Create an edit box to enter number of points
 edit_n = uicontrol('Style', 'edit', 'String', num2str(default_n), ...
                    'Position', [350, 450, 50, 30]);
+uicontrol('Style', 'text', 'String', '# datapoints', ...
+                   'Position', [400, 450, 50, 30]);
 
 % Create an edit box to enter line settings
 startline_x = uicontrol('Style', 'edit', 'String', num2str(default_x), ...
                    'Position', [100, 400, 50, 30]);
+uicontrol('Style', 'text', 'String', 'Initial X', ...
+                   'Position', [100, 430, 50, 30]);
 startline_y = uicontrol('Style', 'edit', 'String', num2str(default_y), ...
                    'Position', [150, 400, 50, 30]);
+uicontrol('Style', 'text', 'String', 'Initial Y', ...
+                   'Position', [150, 430, 50, 30]);
 endline_x = uicontrol('Style', 'edit', 'String', num2str(default_x), ...
                    'Position', [200, 400, 50, 30]);
+uicontrol('Style', 'text', 'String', 'End X', ...
+                   'Position', [200, 430, 50, 30]);
 endline_y = uicontrol('Style', 'edit', 'String', num2str(default_y), ...
                    'Position', [250, 400, 50, 30]);
+uicontrol('Style', 'text', 'String', 'End Y', ...
+                   'Position', [250, 430, 50, 30]);
+
 % Create an edit box to enter curve settings
+startcurve_x = uicontrol('Style', 'edit', 'String', num2str(default_x), ...
+                   'Position', [100, 350, 50, 30]);
+startcurve_y = uicontrol('Style', 'edit', 'String', num2str(default_y), ...
+                   'Position', [150, 350, 50, 30]);
+edit_radiuscurve = uicontrol('Style', 'edit', 'String',num2str(default_scale), ...
+                   'Position', [200, 350, 50, 30]);
+uicontrol('Style', 'text', 'String', 'Radius', ...
+                   'Position', [200, 380, 50, 20]);
+heading_start = uicontrol('Style', 'edit', 'String', num2str(default_x), ...
+                   'Position', [250, 350, 50, 30]);
+uicontrol('Style', 'text', 'String', 'Initial heading', ...
+                   'Position', [250, 380, 50, 20]);
+heading_end = uicontrol('Style', 'edit', 'String', num2str(default_head), ...
+                   'Position', [300, 350, 50, 30]);
+uicontrol('Style', 'text', 'String', 'End heading', ...
+                   'Position', [300, 380, 50, 20]);
 
 % Create an edit box to enter circle settings
 startcir_x = uicontrol('Style', 'edit', 'String', num2str(default_x), ...
-                   'Position', [100, 300, 50, 30]);
-startcir_y = uicontrol('Style', 'edit', 'String', num2str(default_y), ...
-                   'Position', [150, 300, 50, 30]);
-edit_radiuscir = uicontrol('Style', 'edit', 'String', num2str(default_scale), ...
-                   'Position', [200, 300, 50, 30]);
-
-% Create an edit box to enter infinite settings
-startsin_x = uicontrol('Style', 'edit', 'String', num2str(default_x), ...
                    'Position', [100, 250, 50, 30]);
-startsin_y = uicontrol('Style', 'edit', 'String', num2str(default_y), ...
+startcir_y = uicontrol('Style', 'edit', 'String', num2str(default_y), ...
                    'Position', [150, 250, 50, 30]);
-sin_amp = uicontrol('Style', 'edit', 'String', num2str(default_scale), ...
+edit_radiuscir = uicontrol('Style', 'edit', 'String', num2str(default_scale), ...
                    'Position', [200, 250, 50, 30]);
-sin_freq = uicontrol('Style', 'edit', 'String', num2str(default_scale), ...
+uicontrol('Style', 'text', 'String', 'Radius', ...
+                   'Position', [200, 280, 50, 20]);
+startcir_heading = uicontrol('Style', 'edit', 'String', num2str(default_x), ...
                    'Position', [250, 250, 50, 30]);
+uicontrol('Style', 'text', 'String', 'Initial heading', ...
+                   'Position', [250, 280, 50, 20]);
+
+
+% Create an edit box to enter sinus settings
+startsin_x = uicontrol('Style', 'edit', 'String', num2str(default_x), ...
+                   'Position', [100, 200, 50, 30]);
+startsin_y = uicontrol('Style', 'edit', 'String', num2str(default_y), ...
+                   'Position', [150, 200, 50, 30]);
+sin_amp = uicontrol('Style', 'edit', 'String', num2str(default_scale), ...
+                   'Position', [200, 200, 50, 30]);
+uicontrol('Style', 'text', 'String', 'Amplitude', ...
+                   'Position', [200, 230, 50, 20]);
+sin_freq = uicontrol('Style', 'edit', 'String', num2str(default_scale), ...
+                   'Position', [250, 200, 50, 30]);
+uicontrol('Style', 'text', 'String', 'frequency', ...
+                   'Position', [250, 230, 50, 20]);
 sin_rep = uicontrol('Style', 'edit', 'String', num2str(default_scale), ...
-                   'Position', [300, 250, 50, 30]);
+                   'Position', [300, 200, 50, 30]);
+uicontrol('Style', 'text', 'String', 'Repetitions', ...
+                   'Position', [300, 230, 50, 20]);
+
+% Create an edit box to enter bump settings
+startbum_x = uicontrol('Style', 'edit', 'String', num2str(default_x), ...
+                   'Position', [100, 300, 50, 30]);
+startbum_y = uicontrol('Style', 'edit', 'String', num2str(default_y), ...
+                   'Position', [150, 300, 50, 30]);
+bum_amp = uicontrol('Style', 'edit', 'String', num2str(default_scale), ...
+                   'Position', [200, 300, 50, 30]);
+uicontrol('Style', 'text', 'String', 'Amplitude', ...
+                   'Position', [200, 330, 50, 20]);
+bum_freq = uicontrol('Style', 'edit', 'String', num2str(default_scale), ...
+                   'Position', [250, 300, 50, 30]);
+uicontrol('Style', 'text', 'String', 'frequency', ...
+                   'Position', [250, 330, 50, 20]);
+bum_rep = uicontrol('Style', 'edit', 'String', num2str(default_scale), ...
+                   'Position', [300, 300, 50, 30]);
+uicontrol('Style', 'text', 'String', 'Repetitions', ...
+                   'Position', [300, 330, 50, 20]);
+
 
 
 % Create an edit box to enter infinite settings
-edit_radiusinf = uicontrol('Style', 'edit', 'String', num2str(default_scale), ...
-                   'Position', [100, 200, 50, 30]);
 startinf_x = uicontrol('Style', 'edit', 'String', num2str(default_x), ...
-                   'Position', [150, 200, 50, 30]);
+                   'Position', [100, 150, 50, 30]);
 startinf_y = uicontrol('Style', 'edit', 'String', num2str(default_y), ...
-                   'Position', [200, 200, 50, 30]);
+                   'Position', [150, 150, 50, 30]);
+edit_radiusinf = uicontrol('Style', 'edit', 'String', num2str(default_scale), ...
+                   'Position', [200, 150, 50, 30]);
+uicontrol('Style', 'text', 'String', 'Radius', ...
+                   'Position', [200, 180, 50, 20]);
 
 
 % Create buttons to plot each shape
@@ -67,18 +131,22 @@ uicontrol('Style', 'pushbutton', 'String', 'Line', ...
           'Position', [50, 400, 50, 50], 'Callback', @plot_line);
 uicontrol('Style', 'pushbutton', 'String', 'Curve', ...
           'Position', [50, 350, 50, 50], 'Callback', @plot_curve);
+uicontrol('Style', 'pushbutton', 'String', 'bump', ...
+          'Position', [50, 300, 50, 50], 'Callback', @plot_bump);
 uicontrol('Style', 'pushbutton', 'String', 'Circle', ...
-          'Position', [50, 300, 50, 50], 'Callback', @plot_circle);
+          'Position', [50, 250, 50, 50], 'Callback', @plot_circle);
 uicontrol('Style', 'pushbutton', 'String', 'Sinus', ...
-          'Position', [50, 250, 50, 50], 'Callback', @plot_sinus);
+          'Position', [50, 200, 50, 50], 'Callback', @plot_sinus);
 uicontrol('Style', 'pushbutton', 'String', 'infinite', ...
-          'Position', [50, 200, 50, 50], 'Callback', @plot_infinite);
+          'Position', [50, 150, 50, 50], 'Callback', @plot_infinite);
 uicontrol('Style', 'pushbutton', 'String', 'Save', ...
-          'Position', [50, 150, 50, 50], 'Callback', @save_data);
+          'Position', [50, 100, 50, 50], 'Callback', @save_data);
 
 % Initialize the data matrix to an empty array
 data = [];
 figure('Name','Example of segment','Position', [550, 100, 500, 500])
+
+figure('Name','Example of segment','Position', [1050, 100, 500, 500])
 % Define the functions to plot each shape
        function [x, y] = plot_line(~, ~)
         n = str2double(get(edit_n, 'String'));
@@ -89,24 +157,44 @@ figure('Name','Example of segment','Position', [550, 100, 500, 500])
         x = linspace(x_init, x_end, n) ;
         y = linspace(y_init, y_end, n);
         figure(2)
-        plot(x, y);
+        plot(x, y,'*');
         hold on;
         plot(x(1), y(1), 'o');
         hold off
         title('Line');
         data = [x; y];
        end
+
+      function [x, y] = plot_curve(~, ~)
+        n = str2double(get(edit_n, 'String'));
+        x_init = str2double(get(startcurve_x, 'String'));
+        y_init = str2double(get(startcurve_y, 'String'));
+        radius = -str2double(get(edit_radiuscurve, 'String'));
+        heading_s = deg2rad(str2double(get(heading_start, 'String')))-(0.5*pi);
+        heading_e = deg2rad(str2double(get(heading_end, 'String')))-(0.5*pi);
+        theta = linspace(0, (heading_s-heading_e), n);
+        x = radius*cos(theta+heading_s) +  x_init - radius;
+        y = radius*sin(theta+heading_s) +  y_init + radius;
+        figure(2)
+        plot(x, y,'*');
+        hold on;
+        plot(x(1), y(1), 'o');
+        hold off
+        title('curve');
+        data = [x; y];
+       end
     
     function [x, y] = plot_circle(~, ~)
         radius = str2double(get(edit_radiuscir, 'String'));
         n = str2double(get(edit_n, 'String'));
+        heading = deg2rad(str2double(get(startcir_heading, 'String')))-0.5*pi;
         x_init = str2double(get(startcir_x, 'String'));
         y_init = str2double(get(startcir_y, 'String'));
         theta = linspace(0, 2*pi, n);
-        x = radius*cos(theta) + x_init - radius;
-        y = radius*sin(theta) +  y_init;
+        x = radius*cos(theta+heading) +  x_init - radius;
+        y = radius*sin(theta+heading) +  y_init;
         figure(2)
-        plot(x, y);
+        plot(x, y,'*');
         hold on;
         plot(x(1), y(1), 'o');
         hold off;
@@ -123,7 +211,7 @@ figure('Name','Example of segment','Position', [550, 100, 500, 500])
         x = radius*cos(theta) + x_init - radius;
         y = radius*sin(2*theta) / 2 +  y_init;
         figure(2)
-        plot(x, y);
+        plot(x, y,'*');
         hold on;
         plot(x(1), y(1), 'o');
         hold off;
@@ -139,28 +227,33 @@ figure('Name','Example of segment','Position', [550, 100, 500, 500])
         x_init = str2double(get(startsin_x, 'String'));
         y_init = str2double(get(startsin_y, 'String'));
         x = linspace(0, (2*pi*rep)/freq, n)+x_init;
-        y = amplitude*sin(freq*x)+y_init;
+        y = amplitude*sin(freq*x-x_init)+y_init;
         figure(2)
-        plot(x, y);
+        plot(x, y,'*');
         hold on;
         plot(x(1), y(1), 'o');
         hold off
         title('Sinus Wave');
         data = [x; y];
-       end
+    end
 
-    function [x, y] = plot_curve(~, ~)
+    function [x, y] = plot_bump(~, ~)
         n = str2double(get(edit_n, 'String'));
-        x = linspace(-1, 1, n);
-        y = x.^3 - x.^2 + x;
+        rep = str2double(get(bum_rep, 'String'));
+        amplitude = -str2double(get(bum_amp, 'String'));
+        freq = str2double(get(bum_freq, 'String'));
+        x_init = str2double(get(startbum_x, 'String'));
+        y_init = str2double(get(startbum_y, 'String'));
+        x = linspace(0, (2*pi*rep)/freq, n)+x_init;
+        y = amplitude*cos(freq*(x-x_init))+y_init-amplitude;
         figure(2)
-        plot(x, y);
+        plot(x, y,'*');
         hold on;
         plot(x(1), y(1), 'o');
         hold off
-        title('Curve');
+        title('Sinus Wave');
         data = [x; y];
-       end
+    end
 
 %     function save_button(~, ~)
 %         filename = 'trajectory.txt';
@@ -169,11 +262,29 @@ figure('Name','Example of segment','Position', [550, 100, 500, 500])
 
 % Define a function to save the x and y data to a file
     function save_data(~, ~)
-        dlmwrite(filename, data', 'delimiter', '\t');
+        x= data(1,:);
+        y= data(2,:);
         figure(3)
         hold on
-        plot(data(1,:),data(2,:))
+        plot(x,y)
+        axis equal
         hold on
+        
+        trajectory = [trajectory(1,:) x; trajectory(2,:) y];
+        
+        dlmwrite(filename, trajectory', 'delimiter', '\t');
+        set(startline_x,'String',x(end));
+        set(startline_y,'String',y(end));
+        set(startcurve_x,'String',x(end));
+        set(startcurve_y,'String',y(end));
+        set(startsin_x,'String',x(end));
+        set(startsin_y,'String',y(end));
+        set(startbum_x,'String',x(end));
+        set(startbum_y,'String',y(end));
+        set(startcir_x,'String',x(end));
+        set(startcir_y,'String',y(end));
+        set(startinf_x,'String',x(end));
+        set(startinf_y,'String',y(end));
     end
 
     end

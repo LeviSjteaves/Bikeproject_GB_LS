@@ -116,7 +116,7 @@ title('Rollrate');
 % Steer angle and rate
 subplot(3,2,6)
 hold on;
-plot(Results.refSteer_angle.Time(:,1),rad2deg(Results.refSteer_angle.Data(:,1)));
+% plot(Results.refSteer_angle.Time(:,1),rad2deg(Results.refSteer_angle.Data(:,1)));
 plot(Results.trueSteer_angle.Time(:,1),rad2deg(Results.trueSteer_angle.Data(:,1)));
 plot(Results.estimatedSteer_angle.Time(:,1),rad2deg(Results.estimatedSteer_angle.Data(:,1)));
 xlabel('Time [t]')
@@ -124,7 +124,7 @@ ylabel('Angle [Deg]')
 yyaxis right
 plot(Results.steer_rate.Time(:,1),rad2deg(Results.steer_rate.Data(:,1)))
 ylabel('Rate [Deg/s]')
-legend('Ref Steer angle','True Steer angle e','Estimated Steer angle e', 'Steer rate')
+legend('True Steer angle e','Estimated Steer angle e', 'Steer rate')
 % ylim([-3 3])
 % xlim([0 0])
 grid on

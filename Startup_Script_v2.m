@@ -12,7 +12,7 @@ clc;
     % Gravitational Acceleration
         g = -9.81;
     % Name of the model
-        model = 'Main_v2';
+        model = 'Main_CCODE';
     % Simulation time
         sim_time = 50;
     % Sampling Time
@@ -36,7 +36,7 @@ clc;
 % bike model
     bike_model = 1; % 1 = non-linear model || 2 = linear model
 % Run all test cases
-    Run_tests = 0; % 0 = Don't run test cases || 1 = run test cases
+    Run_tests = 0; % 0 = Don't run test cases || 1 = run test cases || 2 = generate ref yourself
 
 % Initial states
 
@@ -66,8 +66,16 @@ scale = 40;
 test_curve=[Xref,Yref,Psiref];
 Nn = size(test_curve,1); % needed for simulink
 
+%% OWN TRAJECTORY
+% if Run_tests == 2
+% test_trajectory();
+% data = fileread('trajectory.txt');
+% test_curve=[Xref,Yref,Psiref];
+% Nn = size(test_curve,1); % needed for simulink
+% end
+
 %% Reference test (warnings and initialization update)
-if Run_tests == 0
+if Run_tests == 0 || Run_tests == 2
 
 Output_reference_test = referenceTest(test_curve,hor_dis,Ts,initial_pose,v, ref_dis);
 
@@ -249,7 +257,7 @@ for i = 1:size(Kalman_gain2,1)
 end
 
  %% Start the Simulation
-if Run_tests == 0
+if Run_tests == 0 || Run_tests == 2
 
 tic
 try Results = sim(model);
