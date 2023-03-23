@@ -53,6 +53,7 @@ extern void Kalman_filter(double *X, double *Y, double *Psi, double *roll, doubl
     double Est_States_l[7];
     double Est_states_l[7];
     double Est_states[7];
+    double y[7];
 
     // Initialize the states vector at time t-1
     Est_States[0] = *X;
@@ -63,18 +64,29 @@ extern void Kalman_filter(double *X, double *Y, double *Psi, double *roll, doubl
     Est_States[5] = *delta;
     Est_States[6] = *v;
 
+    // Transform the GPS lat/long into X/Y measurements
+    [X_GPS,Y_GPS] = transform_latlog_to_XY(longitude, latitude)
+
+    // Wrap the measurements into an array:
+    y[0] = X_GPS;
+    y[1] = Y_GPS;
+    y[2] = a_y;
+    y[3] = w_x;
+    y[4] = w_z;
+    y[5] = delta_enc;
+    y[6] = speed;
 
     // 1. Transformation of states at time t-1 and measurements at time t into local frame
-        Est_States_l = transform_global_to_local(Est_States);
+    Est_States_l = transform_global_to_local(Est_States);
 
     // 2. Time update
-        Est_States_l = time_update(Est_States_l, dot_delta, A_d, B_d);
+    Est_States_l = time_update(Est_States_l, dot_delta, A_d, B_d);
 
     // 3. Measurement update 
-        Est_states_l = measurement_update(Est_States_l);
+    Est_states_l = measurement_update(Est_States_l, *dot_delta, y, Kalman_Gain1, Kalman_Gain2, C1, C2, D1, D2);
 
     // 4. Transform estimated states at time t to global frame
-        Est_states = transform_local_to_global(Est_states_l,Est_States);
+    Est_states = transform_local_to_global(Est_states_l,Est_States);
 
     // Output the estimated states
     *X = Est_states[0];
@@ -192,14 +204,21 @@ double time_update(double Est_States_l, double *dot_delta, double A_d, double B_
 }
 
 // Measurement update using the sensor data at time t
-double measurement update(double Est_States_l, double Kalman_Gain1, double Kalman_Gain2, double C1, 
+double measurement update(double Est_States_l, double *dot_delta, double y, double Kalman_Gain1, double Kalman_Gain2, double C1, 
                           double C2, double D1, double D2)
 {
     double Est_states_l[7];
+    double y_pred[7];
 
     //TODO: THINK ABOUT HOW TO DIFFERENCIATE SAMPLING RATES HERE
-    Est_states_l = Est_States_l;
+    // Est_states_l = Est_States_l;
 
+    // Measurement prediction
+    y_pred = C1 * Est_States_l + D1 * (*dot_delta);
 
+    // Measurement update
+    Est_states_l = Est_States_l + K1 * (y - y_pred);
+
+    return Est_states_l;
 }
 
