@@ -12,9 +12,9 @@ clc;
     % Gravitational Acceleration
         g = 9.81;
     % Name of the model
-        model = 'Main_bikesimulation';
+        model = 'Main_v3';
     % Simulation time
-        sim_time = 30;
+        sim_time = 2;
     % Sampling Time
         Ts = 0.01; 
     % First closest point selection in reference 
@@ -241,7 +241,7 @@ R2 = eye(5);
     eig2 = abs(eig);
     Kalman_gain2 = Kalman_gain2';
 %   Kalman_gain1 = 0*Kalman_gain1;
-%   Kalman_gain2 = 0*Kalman_gain2;
+  Kalman_gain2 = 0*Kalman_gain2;
 %   Kalman_gain1(4,3) = 0;
 
 % Polish the kalman gain (values <10-5 are set to zero)
