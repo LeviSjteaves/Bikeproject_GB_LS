@@ -10,11 +10,11 @@ clc;
 % General Parameters
 
     % Gravitational Acceleration
-        g = -9.81;
+        g = 9.81;
     % Name of the model
-        model = 'Main_CCODE';
+        model = 'Main_v3';
     % Simulation time
-        sim_time = 50;
+        sim_time = 2;
     % Sampling Time
         Ts = 0.01; 
     % First closest point selection in reference 
@@ -60,7 +60,7 @@ ref_dis = 0.05;
 % Number# of reference points
 N = 100; 
 % Scale (only for infinite and circle)
-scale = 40; 
+scale = 100; 
 
 [Xref,Yref,Psiref] = ReferenceGenerator(type,ref_dis,N,scale);
 test_curve=[Xref,Yref,Psiref];
@@ -179,41 +179,43 @@ e2_max=deg2rad(30);%Here is the e2_max we used to calculate e1_max
 e1_max=abs(-k2*e2_max/k1);% k1,k2 has been known, so we can calculate e1_max
 
 %% Kalman Filter
-
+% g=-9.81;
+Speed = v;
 % A matrix (linear bicycle model with constant velocity)
 % Est_States := [X Y psi phi phi_dot delta v]
 A = [0 0 0 0 0 0 1;
      0 0 v 0 0 v*(lr/(lf+lr))*sin(lambda) 0;
      0 0 0 0 0 (v/(lr+lf))*sin(lambda) 0;
      0 0 0 0 1 0 0;
-     0 0 0 (g/h) 0 ((v^2*h-lr*g*c)/(h^2*(lr+lf)))*sin(lambda) 0;
+     0 0 0 (g/h) 0 ((h*Speed^2-g*lr*c)/((lr+lf)*h^2))*sin(lambda) 0;
      0 0 0 0 0 0 0;
      0 0 0 0 0 0 0];
 
 % B matrix (linear bicycle model with constant velocity)
-B = [0 0 0 0 ((lr*v)/(h*(lr+lf)))*sin(lambda) 1 0]';
+B = [0 0 0 0 ((lr*Speed)/((lr+lf)*h)) 1 0]';
 
 % Including GPS
 C1 = [1 0 0 0 0 0 0;
      0 1 0 0 0 0 0;
-     0 0 0 g+((-h_imu*g)/h) 0 (-h_imu*(h*v^2-(g*lr*c)))*sin(lambda)/((lr+lf)*h^2) + (v^2)*sin(lambda)/(lr+lf) 0;
+     0 0 0 (-g+((-h_imu*g)/h)) 0 (-h_imu*(h*v^2-(g*lr*c)))*sin(lambda)/((lr+lf)*h^2)+(v^2)*sin(lambda)/(lr+lf) 0;
      0 0 0 0 1 0 0;
      0 0 0 0 0 (v)*sin(lambda)/(lr+lf) 0;
      0 0 0 0 0 1 0;
      0 0 0 0 0 0 1];
 
-D1 = [0 0 (-h_imu*lr*v)*sin(lambda)/((lr+lf)*h) 0 0 0 0]';
+D1 = [0 0 (-h_imu*lr*v)/((lr+lf)*h) 0 0 0 0]';
 
 % Excluding GPS
-C2 = [g+((-h_imu*g)/h) 0 (-h_imu*(h*v^2-(g*lr*c)))*sin(lambda)/((lr+lf)*h^2) + (v^2)*sin(lambda)/(lr+lf) 0;
+C2 = [(-g+((-h_imu*g)/h)) 0 (-h_imu*(h*v^2-(g*lr*c)))*sin(lambda)/((lr+lf)*h^2)+(v^2)*sin(lambda)/(lr+lf) 0;
       0 1 0 0;
       0 0 (v)*sin(lambda)/(lr+lf) 0;
       0 0 1 0;
       0 0 0 1];
 
-D2 = [(-h_imu*lr*v)*sin(lambda)/((lr+lf)*h) 0 0 0 0]';
+D2 = [(-h_imu*lr*v)/((lr+lf)*h) 0 0 0 0]';
 
 % Discretize the model
+% A_d = A;
 A_d = (eye(size(A))+Ts*A);
 B_d = Ts*B;
 
@@ -238,7 +240,9 @@ R2 = eye(5);
     [P2,Kalman_gain2,eig] = idare(A_d2',C2',Q2,R2,[],[]);
     eig2 = abs(eig);
     Kalman_gain2 = Kalman_gain2';
-
+%   Kalman_gain1 = 0*Kalman_gain1;
+%   Kalman_gain2 = 0*Kalman_gain2;
+%   Kalman_gain1(4,3) = 0;
 
 % Polish the kalman gain (values <10-5 are set to zero)
 for i = 1:size(Kalman_gain1,1)
@@ -255,6 +259,24 @@ for i = 1:size(Kalman_gain2,1)
         end
     end
 end
+
+%% Save matrix in XML
+% Convert the matrix to an XML document
+docNode = com.mathworks.xml.XMLUtils.createDocument('Matrix');
+rootNode = docNode.getDocumentElement;
+for i = 1:size(A, 1)
+    rowNode = docNode.createElement('Row');
+    for j = 1:size(A, 2)
+        valueNode = docNode.createElement('Value');
+        valueNode.appendChild(docNode.createTextNode(num2str(A(i,j))));
+        rowNode.appendChild(valueNode);
+    end
+    rootNode.appendChild(rowNode);
+end
+
+% Save the XML document to a file
+xmlwrite('matrix.xml', docNode);
+% csvwrite('A_matrix.xml',A,B,C1);
 
  %% Start the Simulation
 if Run_tests == 0 || Run_tests == 2
@@ -290,18 +312,24 @@ hold on
 plot(Results.states_estimator.Time(:,1),Results.states_estimator.Data(:,4))
 title('Roll phi')
 legend('true bikemodel','estimator')
+% ylim([-1 1])
+
 subplot(2,2,3);
 plot(Results.states_bikemodel.Time(:,1),Results.states_bikemodel.Data(:,2))
 hold on
 plot(Results.states_estimator.Time(:,1),Results.states_estimator.Data(:,6))
 title('Steering angle delta')
 legend('true bikemodel','estimator')
+% ylim([-1 1])
+
 subplot(2,2,4);
 plot(Results.states_bikemodel.Time(:,1),Results.states_bikemodel.Data(:,3))
 hold on
 plot(Results.states_estimator.Time(:,1),Results.states_estimator.Data(:,5))
 title('Roll rate phidot')
 legend('true bikemodel','estimator')
+% ylim([-1 1])
+
 end
 
 %% Test cases for validation

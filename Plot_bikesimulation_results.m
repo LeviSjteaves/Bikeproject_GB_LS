@@ -13,7 +13,7 @@ xlabel('X-dir [m]');
 ylabel('Y-dir [m]');
 % ylim([traj_plot.ymin traj_plot.ymax])
 % xlim([traj_plot.xmin traj_plot.xmax])
-axis equal
+% axis equal
 grid on;
 title('Trajectory');
 
