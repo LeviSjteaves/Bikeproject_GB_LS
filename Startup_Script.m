@@ -296,40 +296,6 @@ end
 %name of the plot
 Tnumber = 'No test case: General simulation run';
         Plot_bikesimulation_results(Tnumber, Ts, test_curve, Results, bike_params);
-
-%% Space to define the specific DEBUG plots :)
-figure()
-subplot(2,2,1);
-plot(Results.steerrate_bikemodel.Time(:,1),Results.steerrate_bikemodel.Data(:,1))
-hold on
-plot(Results.steerrate_estimator.Time(:,1),Results.steerrate_estimator.Data(:,1))
-title('steerrate deltadot')
-legend('true bikemodel','estimator')
-
-subplot(2,2,2);
-plot(Results.states_bikemodel.Time(:,1),Results.states_bikemodel.Data(:,1))
-hold on
-plot(Results.states_estimator.Time(:,1),Results.states_estimator.Data(:,4))
-title('Roll phi')
-legend('true bikemodel','estimator')
-% ylim([-1 1])
-
-subplot(2,2,3);
-plot(Results.states_bikemodel.Time(:,1),Results.states_bikemodel.Data(:,2))
-hold on
-plot(Results.states_estimator.Time(:,1),Results.states_estimator.Data(:,6))
-title('Steering angle delta')
-legend('true bikemodel','estimator')
-% ylim([-1 1])
-
-subplot(2,2,4);
-plot(Results.states_bikemodel.Time(:,1),Results.states_bikemodel.Data(:,3))
-hold on
-plot(Results.states_estimator.Time(:,1),Results.states_estimator.Data(:,5))
-title('Roll rate phidot')
-legend('true bikemodel','estimator')
-% ylim([-1 1])
-
 end
 
 %% Test cases for validation

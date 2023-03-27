@@ -99,6 +99,9 @@ Earth_rad = 6371000.0;
 
 X = Earth_rad * (deg2rad(data1.longitude) - longitude0) * cos(latitude0);
 Y = Earth_rad * (deg2rad(data1.latitude) - latitude0);
+
+
+
 ay = data1.ay;
 omega_x = data1.Roll;
 omega_y = data1.gy;

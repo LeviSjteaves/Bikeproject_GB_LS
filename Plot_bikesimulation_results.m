@@ -116,7 +116,6 @@ title('Rollrate');
 % Steer angle and rate
 subplot(3,2,6)
 hold on;
-% plot(Results.refSteer_angle.Time(:,1),rad2deg(Results.refSteer_angle.Data(:,1)));
 plot(Results.trueSteer_angle.Time(:,1),rad2deg(Results.trueSteer_angle.Data(:,1)));
 plot(Results.estimatedSteer_angle.Time(:,1),rad2deg(Results.estimatedSteer_angle.Data(:,1)));
 xlabel('Time [t]')
