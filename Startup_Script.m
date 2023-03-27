@@ -12,9 +12,9 @@ clc;
     % Gravitational Acceleration
         g = 9.81;
     % Name of the model
-        model = 'Main_v3';
+        model = 'Main_bikesimulation';
     % Simulation time
-        sim_time = 2;
+        sim_time = 100;
     % Sampling Time
         Ts = 0.01; 
     % First closest point selection in reference 
