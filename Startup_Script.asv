@@ -60,7 +60,7 @@ ref_dis = 0.1;
 % Number# of reference points
 N = 300; 
 % Scale (only for infinite and circle)
-scale = 15; 
+scale = 5; 
 
 [Xref,Yref,Psiref] = ReferenceGenerator(type,ref_dis,N,scale);
 test_curve=[Xref,Yref,Psiref];
