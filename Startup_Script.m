@@ -14,7 +14,7 @@ clc;
     % Name of the model
         model = 'Main_bikesimulation';
     % Simulation time
-        sim_time = 30;
+        sim_time = 200;
     % Sampling Time
         Ts = 0.01; 
     % First closest point selection in reference 
@@ -56,9 +56,9 @@ clc;
 % SHAPE options: sharp_turn, line, infinite, circle, ascent_sin, smooth_curve
 type = 'infinite';
 % Distance between points
-ref_dis = 0.05;
+ref_dis = 0.01;
 % Number# of reference points
-N = 100; 
+N = 600; 
 % Scale (only for infinite and circle)
 scale = 100; 
 

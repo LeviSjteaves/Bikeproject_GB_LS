@@ -14,7 +14,7 @@ clc;
     % Name of the model
         model = 'Kalman_offline_sim';
     % Simulation time
-        sim_time = 20;
+        sim_time = 100;
     % Sampling Time
         Ts = 0.01; 
 
@@ -28,13 +28,12 @@ clc;
     bike_params = LoadBikeParameters(bike); 
 
 % Initial states
-
 % Initial Roll
         initial_state.roll = deg2rad(0);
         initial_state.roll_rate = deg2rad(0);
 % Initial Steering
         initial_state.steering = deg2rad(0);
-% Initial Pose (X,Y,\theta)
+% Initial Pose (X,Y,theta)
         initial_state.x = 0;
         initial_state.y = 0;
         initial_state.heading = deg2rad(0);
@@ -71,11 +70,11 @@ T = Rz*Ry*Rx;
 
 
 %% Load measurements
-
-csv_name = 'BikeData_20230215-184548.csv';   data_range = [7, 34.1902]; %  tstvagain v24 3 seg step0
+% BikeData_Yixiao
+% BikeData_GaizkaLevi
+csv_name = 'BikeData_20230215-191753.csv';   data_range = [7, 34.1902]; %  tstvagain v24 3 seg step0
 CSV_With_EXCEPTION = 1;
- 
- 
+
 if CSV_With_EXCEPTION == 1
     data1 = readtable(csv_name,'headerlines',1); 
     data1_len = size(data1,1);
@@ -92,6 +91,9 @@ else
     data1 = readtable(csv_name,'headerlines',1);
 end
 
+data2 = readtable('BikeData_GaizkaLevi.csv'); 
+data2 = table2array(data2);
+
 %% Select right measurements and input
 longitude0 = deg2rad(data1.longitude(2));
 latitude0 = deg2rad(data1.latitude(2));
@@ -99,8 +101,6 @@ Earth_rad = 6371000.0;
 
 X = Earth_rad * (deg2rad(data1.longitude) - longitude0) * cos(latitude0);
 Y = Earth_rad * (deg2rad(data1.latitude) - latitude0);
-
-
 
 ay = data1.ay;
 omega_x = data1.Roll;
@@ -119,6 +119,12 @@ steer_rate(1,:) = [];
 
 Estimated_compl = [data1.Time data1.x_estimated data1.y_estimated data1.yaw_estimated data1.Roll data1.estimated_rollrate data1.estimated_str_angle data1.v_estimated];
 Estimated_compl(1,:) = [];
+%%
+figure()
+plot(X,Y)
+hold on
+plot(data1.x_estimated,data1.y_estimated)
+axis equal
 
 %% Kalman Filter
 
