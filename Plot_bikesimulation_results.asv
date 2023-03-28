@@ -103,8 +103,8 @@ title('Roll');
 
 subplot(3,2,4)
 hold on
-plot(Results.bike_states.Time(:,1),rad2deg(Results.bike_states.Data(:,5)));
-plot(Results.estimated_states.Time(:,1),rad2deg(Results.estimated_states.Data(:,5)));
+plot(Results.trueRoll_rate.Time(:,1),rad2deg(Results.trueRoll_rate.Data(:,1)));
+plot(Results.estimatedRoll_rate.Time(:,1),rad2deg(Results.estimatedRoll_rate.Data(:,1)));
 legend('True Roll rate','Estimated Roll rate');
 xlabel('Time [t]');
 ylabel('Angle rate [Deg/s]');
@@ -116,12 +116,12 @@ title('Rollrate');
 % Steer angle and rate
 subplot(3,2,6)
 hold on;
-plot(Results.bike_states.Time(:,1),rad2deg(Results.bike_states.Data(:,6)));
-plot(Results.estimated_states.Time(:,1),rad2deg(Results.estimated_states.Data(:,6)));
+plot(Results.trueSteer_angle.Time(:,1),rad2deg(Results.trueSteer_angle.Data(:,1)));
+plot(Results.estimatedSteer_angle.Time(:,1),rad2deg(Results.estimatedSteer_angle.Data(:,1)));
 xlabel('Time [t]')
 ylabel('Angle [Deg]')
 yyaxis right
-plot(Results.ref_states.Time(:,1),rad2deg(Results.ref_states.Data(:,5)))
+plot(Results.steer_rate.Time(:,1),rad2deg(Results.steer_rate.Data(:,1)))
 ylabel('Rate [Deg/s]')
 legend('True Steer angle e','Estimated Steer angle e', 'Steer rate')
 % ylim([-3 3])
@@ -130,9 +130,9 @@ grid on
 title('Steer angle')
 
 figure()
-y = fft(Results.ref_states.Data(:,5));
+y = fft(Results.steer_rate.Data(:,1));
 fs = 1/Ts;
-n = length(Results.ref_states.Data(:,5));
+n = length(Results.steer_rate.Data(:,1));
 fshift = (-n/2:n/2-1)*(fs/n);
 yshift = fftshift(y);
 plot(fshift,abs(yshift))
