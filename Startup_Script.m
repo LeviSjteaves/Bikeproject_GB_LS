@@ -288,7 +288,7 @@ end
 %% Ploting
 %name of the plot
 Tnumber = 'No test case: General simulation run';
-        Plot_bikesimulation_results(Tnumber, Ts, test_curve, Results, bike_params);
+        Plot_bikesimulation_results(Tnumber, Ts, test_curve, Results);
 end
 
 %% Test cases for validation
