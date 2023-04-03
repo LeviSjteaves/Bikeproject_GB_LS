@@ -1,4 +1,4 @@
-function [] = Plot_bikesimulation_results(Tnumber, Ts, test_curve, Results, bike_params)
+function [] = Plot_bikesimulation_results(Tnumber, Ts, test_curve, Results)
 
 % Trajectory
 figure('Name',Tnumber);

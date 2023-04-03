@@ -14,7 +14,7 @@ clc;
     % Name of the model
         model = 'Main_bikesimulation';
     % Simulation time
-        sim_time = 250;
+        sim_time = 200;
     % Sampling Time
         Ts = 0.01; 
     % First closest point selection in reference 
@@ -54,13 +54,13 @@ clc;
 %% Reference trajectory generation
 
 % SHAPE options: sharp_turn, line, infinite, circle, ascent_sin, smooth_curve
-type = 'circle';
+type = 'infinite';
 % Distance between points
-ref_dis = 0.1;
+ref_dis = 0.01;
 % Number# of reference points
-N = 300; 
+N = 600; 
 % Scale (only for infinite and circle)
-scale = 5; 
+scale = 100; 
 
 [Xref,Yref,Psiref] = ReferenceGenerator(type,ref_dis,N,scale);
 test_curve=[Xref,Yref,Psiref];
@@ -183,6 +183,8 @@ e1_max=abs(-k2*e2_max/k1);% k1,k2 has been known, so we can calculate e1_max
 Speed = v;
 % A matrix (linear bicycle model with constant velocity)
 % Est_States := [X Y psi phi phi_dot delta v]
+test_states = [1 1 1 1 1 1 1];
+
 A = [0 0 0 0 0 0 1;
      0 0 v 0 0 v*(lr/(lf+lr))*sin(lambda) 0;
      0 0 0 0 0 (v/(lr+lf))*sin(lambda) 0;
@@ -219,6 +221,7 @@ D2 = [(-h_imu*lr*v)/((lr+lf)*h) 0 0 0 0]';
 A_d = (eye(size(A))+Ts*A);
 B_d = Ts*B;
 
+result test
 % Q and R matrix
 Q = eye(7);
 Q2 = eye(4);
@@ -240,9 +243,6 @@ R2 = eye(5);
     [P2,Kalman_gain2,eig] = idare(A_d2',C2',Q2,R2,[],[]);
     eig2 = abs(eig);
     Kalman_gain2 = Kalman_gain2';
-%   Kalman_gain1 = 0*Kalman_gain1;
-%   Kalman_gain2 = 0*Kalman_gain2;
-%   Kalman_gain1(4,3) = 0;
 
 % Polish the kalman gain (values <10-5 are set to zero)
 for i = 1:size(Kalman_gain1,1)
@@ -260,23 +260,15 @@ for i = 1:size(Kalman_gain2,1)
     end
 end
 
-%% Save matrix in XML
-% Convert the matrix to an XML document
-docNode = com.mathworks.xml.XMLUtils.createDocument('Matrix');
-rootNode = docNode.getDocumentElement;
-for i = 1:size(A, 1)
-    rowNode = docNode.createElement('Row');
-    for j = 1:size(A, 2)
-        valueNode = docNode.createElement('Value');
-        valueNode.appendChild(docNode.createTextNode(num2str(A(i,j))));
-        rowNode.appendChild(valueNode);
-    end
-    rootNode.appendChild(rowNode);
-end
+%% Save matrix in XML/CSV
 
-% Save the XML document to a file
-xmlwrite('matrix.xml', docNode);
-% csvwrite('A_matrix.xml',A,B,C1);
+matrixmat = [A_d; B_d'; C1; D1';Kalman_gain1];
+
+filename_matrix = 'matrixmat.csv'; % Specify the filename
+csvwrite(filename_matrix, matrixmat); % Write the matrix to the CSV file
+
+filename_trajectory = 'trajectorymat.csv'; % Specify the filename
+csvwrite(filename_trajectory, test_curve); % Write the matrix to the CSV file
 
  %% Start the Simulation
 if Run_tests == 0 || Run_tests == 2

@@ -17,7 +17,9 @@ clc;
         sim_time = 100;
     % Sampling Time
         Ts = 0.01; 
-
+    % Select measurement data for the offline Kalman filter
+    % 0 for Yixiao's measurement data, 1 for measurement data which is recorded during a simulation (infinity shape)
+        select = 0; 
 % Open the Simulink Model
     open([model '.slx']);
 % Choose the solver
@@ -41,7 +43,7 @@ clc;
         initial_state_estimate = initial_state;
 
 %% Unpacked bike_params
-v=3;
+v=2;
 h = bike_params.h_mod;
 lr = bike_params.lr_mod;
 lf = bike_params.lf_mod; 
@@ -71,7 +73,6 @@ T = Rz*Ry*Rx;
 
 %% Load measurements
 % BikeData_Yixiao
-% BikeData_GaizkaLevi
 csv_name = 'BikeData_20230215-191753.csv';   data_range = [7, 34.1902]; %  tstvagain v24 3 seg step0
 CSV_With_EXCEPTION = 1;
 
@@ -79,7 +80,7 @@ if CSV_With_EXCEPTION == 1
     data1 = readtable(csv_name,'headerlines',1); 
     data1_len = size(data1,1);
     opts = detectImportOptions(csv_name);
-    opts.DataLines = [3 data1_len]; % remove the last row, as it would be the termination flag
+    opts.DataLines = [4 data1_len]; % remove the last row, as it would be the termination flag
     data1 = readtable(csv_name,opts);
     fid = fopen(csv_name);
     csv_Data = textscan(fid, '%[^\n]', data1_len+2, 'HeaderLines', 0);
@@ -91,10 +92,14 @@ else
     data1 = readtable(csv_name,'headerlines',1);
 end
 
+% BikeData_GaizkaLevi (infinity shape)
 data2 = readtable('BikeData_GaizkaLevi.csv'); 
 data2 = table2array(data2);
 
 %% Select right measurements and input
+% Converting GPS data to X and Y position
+
+% Setting X and Y to zero at first long/lat datapoint
 longitude0 = deg2rad(data1.longitude(2));
 latitude0 = deg2rad(data1.latitude(2));
 Earth_rad = 6371000.0;
@@ -103,9 +108,9 @@ X = Earth_rad * (deg2rad(data1.longitude) - longitude0) * cos(latitude0);
 Y = Earth_rad * (deg2rad(data1.latitude) - latitude0);
 
 ay = data1.ay;
-omega_x = data1.Roll;
+omega_x = data1.RollRate;
 omega_y = data1.gy;
-delta_enc = data1.SteeringAngle;
+delta_enc = data1.SteeringAngle - data1.steering_offset;
 v_enc = data1.FilteredVelocity;
 steer_rate_calc = diff(data1.SteeringAngle);
 steer_rate_calc = [steer_rate_calc;steer_rate_calc(end)];
@@ -117,14 +122,8 @@ measurements(1,:) = [];
 steer_rate = [data1.Time steer_rate_calc];
 steer_rate(1,:) = [];
 
-Estimated_compl = [data1.Time data1.x_estimated data1.y_estimated data1.yaw_estimated data1.Roll data1.estimated_rollrate data1.estimated_str_angle data1.v_estimated];
+Estimated_compl = [data1.Time data1.x_estimated data1.y_estimated data1.yaw_estimated data1.Roll data1.estimated_rollrate];
 Estimated_compl(1,:) = [];
-%%
-figure()
-plot(X,Y)
-hold on
-plot(data1.x_estimated,data1.y_estimated)
-axis equal
 
 %% Kalman Filter
 
