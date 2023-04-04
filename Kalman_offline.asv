@@ -93,12 +93,12 @@ else
 end
 
 % BikeData_GaizkaLevi (infinity shape)
-data2 = readtable('bikedata_simulation.csv');
-steer_rate_simulation = table2array(data2(:,8));
-Kalman_filter_simulation = table2array(data2(:,1:7));
+data2 = readtable('BikeData_GaizkaLevi.csv'); 
+Kalman_filter_simulation = table2array(data2);
 
 %% Select right measurements and input
 % Converting GPS data to X and Y position
+
 % Setting X and Y to zero at first long/lat datapoint
 longitude0 = deg2rad(data1.longitude(2));
 latitude0 = deg2rad(data1.latitude(2));
@@ -124,8 +124,8 @@ steer_rate_blackbike = [data1.Time steer_rate_calc];
 steer_rate_blackbike(1,:) = [];
 
 % Prepare measurement data for the offline kalman
-Estimated_blackbike = [data1.Time data1.x_estimated data1.y_estimated data1.yaw_estimated data1.Roll data1.estimated_rollrate];
-Estimated_blackbike(1,:) = [];
+Estimated_compl = [data1.Time data1.x_estimated data1.y_estimated data1.yaw_estimated data1.Roll data1.estimated_rollrate];
+Estimated_compl(1,:) = [];
 
 %% Kalman Filter
 
@@ -213,7 +213,43 @@ try Results = sim(model);
 end
 toc
 
+% % Simulation Messages and Warnings
+% if Results.stop.Data(end) == 1
+%     disp('Message: End of the trajectory has been reached');
+% end
 
+% %% Ploting
+% %name of the plot
+% Tnumber = 'No test case: General simulation run';
+%         Plot_bikesimulation_results(Tnumber, Ts, test_curve, Results, bike_params);
+% 
+% %% Space to define the specific DEBUG plots :)
+% figure()
+% subplot(2,2,1);
+% % plot(Results.steerrate_bikemodel.Time(:,1),data1.Steerrate)
+% hold on
+% plot(Results.steerrate_estimator.Time(:,1),Results.steerrate_estimator.Data(:,1))
+% title('steerrate deltadot')
+% legend('true bikemodel','estimator')
+% 
+% subplot(2,2,2);
+% plot(Results.states_bikemodel.Time(:,1),data1.Roll)
+% hold on
+% plot(Results.states_estimator.Time(:,1),Results.states_estimator.Data(:,4))
+% title('Roll phi')
+% legend('true bikemodel','estimator')
+% subplot(2,2,3);
+% plot(Results.states_bikemodel.Time(:,1),Results.states_bikemodel.Data(:,2))
+% hold on
+% plot(Results.states_estimator.Time(:,1),Results.states_estimator.Data(:,6))
+% title('Steering angle delta')
+% legend('true bikemodel','estimator')
+% subplot(2,2,4);
+% plot(Results.states_bikemodel.Time(:,1),Results.states_bikemodel.Data(:,3))
+% hold on
+% plot(Results.states_estimator.Time(:,1),Results.states_estimator.Data(:,5))
+% title('Roll rate phidot')
+% legend('true bikemodel','estimator')
 
 %% Utility Functions
 

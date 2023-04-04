@@ -285,6 +285,11 @@ if Results.stop.Data(end) == 1
     disp('Message: End of the trajectory has been reached');
 end
 
+bikedata_simulation = Results.estimated_states.Data ;
+filename_simulation = 'bikedata_simulation.csv'; % Specify the filename
+csvwrite(filename_simulation, bikedata_simulation); % Write the matrix to the CSV file
+
+
 %% Ploting
 %name of the plot
 Tnumber = 'No test case: General simulation run';
@@ -465,7 +470,7 @@ function Parameters = LoadBikeParameters(bike)
         Parameters.c_mod = 0.06;                % length between front wheel contact point and the extention of the fork axis [m]
         Parameters.m_mod = 45;                  % Bike mas [kg]
         Parameters.lambda_mod = deg2rad(70);    % angle of the fork axis [deg]
-        Parameters.IMU_height_mod = 0.215;      % IMU height [m]
+        Parameters.IMU_height_mod = 0.615;      % IMU height [m]
         Parameters.IMU_x_mod = 0.0;           % x Position of the IMU measured from rear wheel (parallel to bike) [m]
         Parameters.IMU_roll_mod = 0;           % Orientation offset in roll (degrees)
         Parameters.IMU_pitch_mod = 0;            % Orientation offset in pitch (degrees)
