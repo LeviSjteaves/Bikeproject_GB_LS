@@ -13,37 +13,37 @@ clc;
         g = 9.81;
     % Name of the model
         model = 'Kalman_offline_sim';
-    % Simulation time
-        sim_time = 20;
     % Sampling Time
         Ts = 0.01; 
-    % Select measurement data for the offline Kalman filter
-    % 0 for Yixiao's measurement data, 1 for measurement data which is recorded during a simulation (infinity shape)
-        select = 0; 
 % Open the Simulink Model
     open([model '.slx']);
 % Choose the solver
     set_param(model,'AlgebraicLoopSolver','TrustRegion');
-% Choose The Bike - Options: 'red' or 'black'
-    bike = 'red';
+
+    
+%%%%%%%%%%%%%GUI%%%%%%%%%%%%%%%%%
+% reduce/increase simulation time for desired timescale on x-axis of the plots
+sim_time = 20;
+
+% 0 for Yixiao's measurement data, 1 for measurement data which is recorded during a simulation (infinity shape)
+select = 0; 
+
+% Take into account a valid speed. 
+% Yixiao's measurements: 0-2 m/s.
+% Simulation measurements: 3 m/s
+v=3;
+
+% Choose The Bike - Options: 'red' or 'black' 
+% Yixiao uses black 
+% Simulation uses red
+    bike = 'black';
+
 % Load the parameters of the specified bicycle
     bike_params = LoadBikeParameters(bike); 
-
-% Initial states
-% Initial Roll
-        initial_state.roll = deg2rad(0);
-        initial_state.roll_rate = deg2rad(0);
-% Initial Steering
-        initial_state.steering = deg2rad(0);
-% Initial Pose (X,Y,theta)
-        initial_state.x = 0;
-        initial_state.y = 0;
-        initial_state.heading = deg2rad(0);
-        initial_pose = [initial_state.x; initial_state.y; initial_state.heading];
-        initial_state_estimate = initial_state;
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %% Unpacked bike_params
-v=2;
+
 h = bike_params.h_mod;
 lr = bike_params.lr_mod;
 lf = bike_params.lf_mod; 
@@ -93,9 +93,41 @@ else
 end
 
 % BikeData_GaizkaLevi (infinity shape)
-data2 = readtable('bikedata_simulation.csv');
-steer_rate_simulation = table2array(data2(:,8));
-Kalman_filter_simulation = table2array(data2(:,1:7));
+data2 = readtable('bikedata_simulation_measurements.csv');
+steer_rate_simulation = [table2array(data2(:,1)) table2array(data2(:,9))];
+Kalman_filter_simulation = table2array(data2(:,1:8));
+
+data3 = readtable('bikedata_simulation_bikestates.csv');
+
+data4 = readtable('bikedata_simulation_estimation.csv');
+
+%% Initial states
+if select == 1
+% Initial Roll
+        initial_state.roll = deg2rad(0);
+        initial_state.roll_rate = deg2rad(0);
+% Initial Steering
+        initial_state.steering = deg2rad(0);
+% Initial Pose (X,Y,theta)
+        initial_state.x = data3.Var2(1);
+        initial_state.y = data3.Var3(1);
+        initial_state.heading = deg2rad(data3.Var4(1));
+        initial_pose = [initial_state.x; initial_state.y; initial_state.heading];
+        initial_state_estimate = initial_state;
+else
+% Initial Roll
+        initial_state.roll = deg2rad(0);
+        initial_state.roll_rate = deg2rad(0);
+% Initial Steering
+        initial_state.steering = deg2rad(0);
+% Initial Pose (X,Y,theta)
+        initial_state.x = 0;
+        initial_state.y = 0;
+        initial_state.heading = deg2rad(0);
+        initial_pose = [initial_state.x; initial_state.y; initial_state.heading];
+        initial_state_estimate = initial_state;
+end
+
 
 %% Select right measurements and input
 % Converting GPS data to X and Y position
@@ -123,9 +155,6 @@ measurements(1,:) = [];
 steer_rate_blackbike = [data1.Time steer_rate_calc];
 steer_rate_blackbike(1,:) = [];
 
-% Prepare measurement data for the offline kalman
-Estimated_blackbike = [data1.Time data1.x_estimated data1.y_estimated data1.yaw_estimated data1.Roll data1.estimated_rollrate];
-Estimated_blackbike(1,:) = [];
 
 %% Kalman Filter
 
@@ -192,14 +221,14 @@ R2 = eye(5);
 % Polish the kalman gain (values <10-5 are set to zero)
 for i = 1:size(Kalman_gain1,1)
     for j = 1:size(Kalman_gain1,2)
-        if Kalman_gain1(i,j) < 10^-5
+        if abs(Kalman_gain1(i,j)) < 10^-5
             Kalman_gain1(i,j) = 0;
         end
     end
 end 
 for i = 1:size(Kalman_gain2,1)
     for j = 1:size(Kalman_gain2,2)
-        if Kalman_gain2(i,j) < 10^-5
+        if abs(Kalman_gain2(i,j)) < 10^-5
             Kalman_gain2(i,j) = 0;
         end
     end
@@ -214,33 +243,165 @@ end
 toc
 
 %% Plot results
+close all
+if select == 0
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+fig = figure();
+plot(Results.sim_Kalman.Data(:,1), Results.sim_Kalman.Data(:,2))
+hold on
+plot(data1.x_estimated,data1.y_estimated)
+plot(measurementsGPS(:,2),measurementsGPS(:,3))
+xlabel('X position (m)')
+ylabel('Y position (m)')
+grid on
+legend('offline Kalman estimation', 'Yixiao estimation','GPS measurements')
+title('Comparison with Yixiao measurement data')
+
+fig = figure();
+subplot(421)
+plot(Results.sim_Kalman.Time,Results.sim_Kalman.Data(:,1))
+hold on
+plot(data1.Time, data1.x_estimated)
+xlabel('Time (s)')
+ylabel('X position (m)')
+grid on
+legend('offline Kalman estimation', 'Yixiao estimation')
+title('Comparison with Yixiao measurement data')
+
+subplot(423)
+plot(Results.sim_Kalman.Time, Results.sim_Kalman.Data(:,2))
+hold on
+plot(data1.Time, data1.y_estimated)
+xlabel('Time (s)')
+ylabel('Y position (m)')
+grid on
+legend('offline Kalman estimation', 'Yixiao estimation')
+
+subplot(425)
+plot(Results.sim_Kalman.Time, Results.sim_Kalman.Data(:,3))
+hold on
+plot(data1.Time, data1.yaw_estimated)
+xlabel('Time (s)')
+ylabel('heading (rad)')
+grid on
+legend('offline Kalman estimation', 'Yixiao estimation')
+
+subplot(422)
+plot(Results.sim_Kalman.Time, Results.sim_Kalman.Data(:,4))
+hold on
+plot(data1.Time,data1.Roll)
+xlabel('Time (s)')
+ylabel('Roll (rad)')
+grid on
+legend('offline Kalman estimation', 'Yixiao estimation')
+title('Comparison with Yixiao measurement data')
+
+subplot(424)
+plot(Results.sim_Kalman.Time, Results.sim_Kalman.Data(:,5))
+hold on
+plot(data1.Time, data1.RollRate)
+xlabel('Time (s)')
+ylabel('Roll Rate (rad/s)')
+grid on
+legend('offline Kalman estimation', 'Yixiao estimation')
+
+subplot(426)
+plot(Results.sim_Kalman.Time,Results.sim_Kalman.Data(:,6))
+hold on
+plot(data1.Time,data1.SteeringAngle - data1.steering_offset)
+xlabel('Time (s)')
+ylabel('Steering Angle (rad)')
+grid on
+legend('offline Kalman estimation', 'Yixiao estimation')
+
+subplot(428)
+plot(Results.sim_Kalman.Time, Results.sim_Kalman.Data(:,7))
+hold on
+plot(data1.Time, data1.v_estimated)
+xlabel('Time (s)')
+ylabel('velocity (m/s)')
+grid on
+legend('offline Kalman estimation', 'Yixiao estimation')
+else
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 fig = figure()
-subplot(311)
-plot(Results.estimatedRoll.Time, rad2deg(Results.estimatedRoll.Data))
+plot(Results.sim_Kalman.Data(:,1), Results.sim_Kalman.Data(:,2))
 hold on
-plot(data1.Time, rad2deg(data1.Roll))
-xlabel('Time (s)')
-ylabel('Roll (degree)')
+plot(data3.Var2,data3.Var3)
+plot(Kalman_filter_simulation(:,2),Kalman_filter_simulation(:,3))
+xlabel('X position (m)')
+ylabel('Y position (m)')
 grid on
-legend('Kalman Sim', 'data')
+legend('offline Kalman estimation', 'True state','Measurements')
+title('Comparison with simulation measurement data')
 
-subplot(312)
-plot(Results.estimatedSteer_angle.Time, rad2deg(Results.estimatedSteer_angle.Data))
+fig = figure()
+subplot(421)
+plot(Results.sim_Kalman.Time, Results.sim_Kalman.Data(:,1))
 hold on
-plot(data1.Time, rad2deg(data1.SteeringAngle - data1.steering_offset))
+plot(data3.Var1, data3.Var2)
 xlabel('Time (s)')
-ylabel('Steering Angle (degree)')
+ylabel('X position (m)')
 grid on
-legend('Kalman Sim', 'data')
+legend('offline Kalman estimation', 'True state')
+title('Comparison with simulation measurement data')
 
-subplot(313)
-plot(Results.estimatedRoll_rate.Time, rad2deg(Results.estimatedRoll_rate.Data))
+subplot(423)
+plot(Results.sim_Kalman.Time, Results.sim_Kalman.Data(:,2))
 hold on
-plot(data1.Time, rad2deg(data1.RollRate))
+plot(data3.Var1, data3.Var3)
 xlabel('Time (s)')
-ylabel('Roll Rate (degree/s)')
+ylabel('Y position (m)')
 grid on
-legend('Kalman Sim', 'data')
+legend('offline Kalman estimation', 'True state')
+
+subplot(425)
+plot(Results.sim_Kalman.Time, Results.sim_Kalman.Data(:,3))
+hold on
+plot(data3.Var1, data3.Var4)
+xlabel('Time (s)')
+ylabel('heading (rad)')
+grid on
+legend('offline Kalman estimation', 'True state')
+
+subplot(422)
+plot(Results.sim_Kalman.Time, Results.sim_Kalman.Data(:,4))
+hold on
+plot(data3.Var1, data3.Var5)
+xlabel('Time (s)')
+ylabel('Roll (rad)')
+grid on
+legend('offline Kalman estimation', 'True state')
+title('Comparison with simulation measurement data')
+
+subplot(424)
+plot(Results.sim_Kalman.Time, Results.sim_Kalman.Data(:,5))
+hold on
+plot(data3.Var1, data3.Var6)
+xlabel('Time (s)')
+ylabel('Roll Rate (rad/s)')
+grid on
+legend('offline Kalman estimation', 'True state')
+
+subplot(426)
+plot(Results.sim_Kalman.Time, Results.sim_Kalman.Data(:,6))
+hold on
+plot(data3.Var1, data3.Var7)
+xlabel('Time (s)')
+ylabel('Steering Angle (rad)')
+grid on
+legend('offline Kalman estimation', 'True state')
+
+subplot(428)
+plot(Results.sim_Kalman.Time, Results.sim_Kalman.Data(:,7))
+hold on
+plot(data3.Var1, data3.Var8)
+xlabel('Time (s)')
+ylabel('Velocity (m/s)')
+grid on
+legend('offline Kalman estimation', 'True state')
+
+end
 
 %% Utility Functions
 
@@ -257,7 +418,7 @@ function Parameters = LoadBikeParameters(bike)
         Parameters.c = 0.06;               % length between front wheel contact point and the extention of the fork axis [m]
         Parameters.m = 45;                 % Bike mas [kg]
         Parameters.lambda = deg2rad(70);   % angle of the fork axis [deg]
-        Parameters.IMU_height = 0.215;      % IMU height [m]
+        Parameters.IMU_height = 0.615;      % IMU height [m]
         Parameters.IMU_x = 0.0;           % x Position of the IMU measured from rear wheel (parallel to bike) [m]
         Parameters.IMU_roll = 0;           % Orientation offset in roll (degrees)
         Parameters.IMU_pitch = 0;            % Orientation offset in pitch (degrees)
@@ -275,7 +436,7 @@ function Parameters = LoadBikeParameters(bike)
         Parameters.c_mod = 0.06;                % length between front wheel contact point and the extention of the fork axis [m]
         Parameters.m_mod = 45;                  % Bike mas [kg]
         Parameters.lambda_mod = deg2rad(70);    % angle of the fork axis [deg]
-        Parameters.IMU_height_mod = 0.215;      % IMU height [m]
+        Parameters.IMU_height_mod = 0.615;      % IMU height [m]
         Parameters.IMU_x_mod = 0.0;           % x Position of the IMU measured from rear wheel (parallel to bike) [m]
         Parameters.IMU_roll_mod = 0;           % Orientation offset in roll (degrees)
         Parameters.IMU_pitch_mod = 0;            % Orientation offset in pitch (degrees)

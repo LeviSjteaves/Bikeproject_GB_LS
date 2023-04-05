@@ -14,7 +14,7 @@ clc;
     % Name of the model
         model = 'Main_bikesimulation';
     % Simulation time
-        sim_time = 200;
+        sim_time = 10;
     % Sampling Time
         Ts = 0.01; 
     % First closest point selection in reference 
@@ -54,13 +54,13 @@ clc;
 %% Reference trajectory generation
 
 % SHAPE options: sharp_turn, line, infinite, circle, ascent_sin, smooth_curve
-type = 'infinite';
+type = 'circle';
 % Distance between points
-ref_dis = 0.01;
+ref_dis = 0.05;
 % Number# of reference points
 N = 600; 
 % Scale (only for infinite and circle)
-scale = 100; 
+scale = 10; 
 
 [Xref,Yref,Psiref] = ReferenceGenerator(type,ref_dis,N,scale);
 test_curve=[Xref,Yref,Psiref];
@@ -248,14 +248,14 @@ R2 = eye(5);
 % Polish the kalman gain (values <10-5 are set to zero)
 for i = 1:size(Kalman_gain1,1)
     for j = 1:size(Kalman_gain1,2)
-        if Kalman_gain1(i,j) < 10^-5
+        if abs(Kalman_gain1(i,j)) < 10^-5
             Kalman_gain1(i,j) = 0;
         end
     end
 end 
 for i = 1:size(Kalman_gain2,1)
     for j = 1:size(Kalman_gain2,2)
-        if Kalman_gain2(i,j) < 10^-5
+        if abs(Kalman_gain2(i,j)) < 10^-5
             Kalman_gain2(i,j) = 0;
         end
     end
@@ -285,9 +285,17 @@ if Results.stop.Data(end) == 1
     disp('Message: End of the trajectory has been reached');
 end
 
-bikedata_simulation = Results.estimated_states.Data ;
-filename_simulation = 'bikedata_simulation.csv'; % Specify the filename
-csvwrite(filename_simulation, bikedata_simulation); % Write the matrix to the CSV file
+bikedata_simulation_bikestates = [Results.bike_states.Time Results.bike_states.Data];
+filename_simulation_bikestates = 'bikedata_simulation_bikestates.csv'; % Specify the filename
+csvwrite(filename_simulation_bikestates, bikedata_simulation_bikestates); % Write the matrix to the CSV file
+
+bikedata_simulation_estimation = [Results.measurements.Time Results.measurements.Data Results.steerrate_input.data];
+filename_simulation_estimation = 'bikedata_simulation_measurements.csv'; % Specify the filename
+csvwrite(filename_simulation_estimation, bikedata_simulation_estimation); % Write the matrix to the CSV file
+
+bikedata_simulation_estimation = [Results.estimated_states.Time Results.estimated_states.Data];
+filename_simulation_estimation = 'bikedata_simulation_estimation.csv'; % Specify the filename
+csvwrite(filename_simulation_estimation, bikedata_simulation_estimation); % Write the matrix to the CSV file
 
 
 %% Ploting
