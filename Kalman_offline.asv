@@ -245,32 +245,30 @@ toc
 %% Comparing different Q R
 % Q = eye(7);
 % Q2(4,4)=0.5;
-Qgain = 1;
-Rgain = 1;
-Q =Qgain* [0.2^2 0 0 0 0 0 0;
+
+Q = [0.2^2 0 0 0 0 0 0;
       0 0.2^2 0 0 0 0 0;
-      0 0 1 0 0 0 0;
+      0 0 0 0 0 0 0;
       0 0 0 deg2rad(2)^2 0 0 0;
       0 0 0 0 deg2rad(1)^2 0 0;
       0 0 0 0 0 deg2rad(2)^2 0;
-      0 0 0 0 0 0 1];
-Q2 =Qgain* [deg2rad(2)^2 0 0 0;
+      0 0 0 0 0 0 0.5];
+Q2 = [deg2rad(2)^2 0 0 0;
        0 deg2rad(2)^2 0 0;
        0 0 deg2rad(2)^2 0;
        0 0 0 0.5];
-R1 =Rgain* [0.2^2 0 0 0 0 0 0;
+R1 = [0.2^2 0 0 0 0 0 0;
       0 0.2^2 0 0 0 0 0;
-      0 0 1 0 0 0 0;
+      0 0 0 0 0 0 0;
       0 0 0 deg2rad(2)^2 0 0 0;
       0 0 0 0 deg2rad(1)^2 0 0;
       0 0 0 0 0 deg2rad(2)^2 0;
       0 0 0 0 0 0 50^2];
-R2 =Rgain* [1 0 0 0 0;
+R2 = [1 0 0 0 0;
       0 deg2rad(2)^2 0 0 0;
       0 0 deg2rad(1)^2 0 0;
       0 0 0 deg2rad(2)^2 0;
       0 0 0 0 50^2];
-
 % Compute Kalman Gain
     % including GPS
     [P1,Kalman_gain1,eig] = idare(A_d',C1',Q,R1,[],[]);
