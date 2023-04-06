@@ -31,7 +31,7 @@ select = 0;
 % Take into account a valid speed. 
 % Yixiao's measurements: 0-2 m/s.
 % Simulation measurements: 3 m/s
-v=2;
+v=1;
 
 % Choose The Bike - Options: 'red' or 'black' 
 % Yixiao uses black 
@@ -73,7 +73,7 @@ T = Rz*Ry*Rx;
 
 %% Load measurements
 % BikeData_Yixiao
-csv_name = 'BikeData_20230215-191753.csv';   data_range = [7, 34.1902]; %  tstvagain v24 3 seg step0
+csv_name = 'BikeData_20230222-205544.csv';   data_range = [7, 34.1902]; %  tstvagain v24 3 seg step0
 CSV_With_EXCEPTION = 1;
 
 if CSV_With_EXCEPTION == 1
@@ -217,6 +217,8 @@ R2 = eye(5);
     eig2 = abs(eig);
     Kalman_gain2 = Kalman_gain2';
 
+%     Kalman_gain1(4,:) =0;
+%     Kalman_gain2(1,:) =0;
 
 % Polish the kalman gain (values <10-5 are set to zero)
 for i = 1:size(Kalman_gain1,1)
@@ -247,29 +249,73 @@ toc
 % Q2(4,4)=0.5;
 Qgain = 1;
 Rgain = 1;
-Q =Qgain* [0.2^2 0 0 0 0 0 0;
-      0 0.2^2 0 0 0 0 0;
-      0 0 1 0 0 0 0;
-      0 0 0 deg2rad(2)^2 0 0 0;
-      0 0 0 0 deg2rad(1)^2 0 0;
-      0 0 0 0 0 deg2rad(2)^2 0;
-      0 0 0 0 0 0 1];
-Q2 =Qgain* [deg2rad(2)^2 0 0 0;
-       0 deg2rad(2)^2 0 0;
-       0 0 deg2rad(2)^2 0;
-       0 0 0 0.5];
-R1 =Rgain* [0.2^2 0 0 0 0 0 0;
-      0 0.2^2 0 0 0 0 0;
-      0 0 1 0 0 0 0;
-      0 0 0 deg2rad(2)^2 0 0 0;
-      0 0 0 0 deg2rad(1)^2 0 0;
-      0 0 0 0 0 deg2rad(2)^2 0;
-      0 0 0 0 0 0 50^2];
-R2 =Rgain* [1 0 0 0 0;
-      0 deg2rad(2)^2 0 0 0;
-      0 0 deg2rad(1)^2 0 0;
-      0 0 0 deg2rad(2)^2 0;
-      0 0 0 0 50^2];
+% Parameters of Q
+Q_GPS = 0.2^2;
+Q_Psi = 1^2;
+Q_roll = deg2rad(2)^2;
+Q_rollrate = deg2rad(1)^2;
+Q_delta = 50;
+Q_v = 0.5^2;
+Qscale = 1;
+Q =Qscale* [Q_GPS 0 0 0 0 0 0;
+              0 Q_GPS 0 0 0 0 0;
+              0 0 Q_Psi 0 0 0 0;
+              0 0 0 Q_roll 0 0 0;
+              0 0 0 0 Q_rollrate 0 0;
+              0 0 0 0 0 Q_delta 0;
+              0 0 0 0 0 0 Q_v];
+
+Q2 =Qscale* [Q_roll 0 0 0;
+               0 Q_rollrate 0 0;
+               0 0 Q_delta 0;
+               0 0 0 Q_v];
+
+% Parameters of R
+R_GPS = 0.2^2;
+R_ay = 1;
+R_wx = deg2rad(2)^2;
+R_wz = deg2rad(1)^2;
+R_delta = 0.0001;
+R_v = 50^2;
+Rscale = 1;
+R1 =Rscale* [R_GPS 0 0 0 0 0 0;
+              0 R_GPS 0 0 0 0 0;
+              0 0 R_ay 0 0 0 0;
+              0 0 0 R_wx 0 0 0;
+              0 0 0 0 R_wz 0 0;
+              0 0 0 0 0 R_delta 0;
+              0 0 0 0 0 0 R_v];
+
+R2 =Rscale* [R_ay 0 0 0 0;
+              0 R_wx 0 0 0;
+              0 0 R_wz 0 0;
+              0 0 0 R_delta 0;
+              0 0 0 0 R_v];
+
+% Q =Qgain* [0.2^2 0 0 0 0 0 0;
+%       0 0.2^2 0 0 0 0 0;
+%       0 0 1 0 0 0 0;
+%       0 0 0 deg2rad(2)^2 0 0 0;
+%       0 0 0 0 deg2rad(1)^2 0 0;
+%       0 0 0 0 0 50 0;
+%       0 0 0 0 0 0 0.5^2];
+% Q2 =Qgain* [deg2rad(2)^2 0 0 0;
+%        0 deg2rad(2)^2 0 0;
+%        0 0 50 0;
+%        0 0 0 0.5^2];
+% R1 =Rgain* [0.2^2 0 0 0 0 0 0;
+%       0 0.2^2 0 0 0 0 0;
+%       0 0 1 0 0 0 0;
+%       0 0 0 deg2rad(2)^2 0 0 0;
+%       0 0 0 0 deg2rad(1)^2 0 0;
+%       0 0 0 0 0 0.0001 0;
+%       0 0 0 0 0 0 50^2];
+% R2 =Rgain* [1 0 0 0 0;
+%       0 deg2rad(2)^2 0 0 0;
+%       0 0 deg2rad(1)^2 0 0;
+%       0 0 0 0.0001 0;
+%       0 0 0 0 50^2];
+
 
 % Compute Kalman Gain
     % including GPS
@@ -286,6 +332,9 @@ R2 =Rgain* [1 0 0 0 0;
     [P2,Kalman_gain2,eig] = idare(A_d2',C2',Q2,R2,[],[]);
     eig2 = abs(eig);
     Kalman_gain2 = Kalman_gain2';
+
+%     Kalman_gain1(:,6) =0;
+%     Kalman_gain2(:,5) =0;
 
 
 % Polish the kalman gain (values <10-5 are set to zero)
@@ -314,7 +363,7 @@ toc
 close all
 
 %GPS correction Yixiao
-alp = deg2rad(74);
+alp = deg2rad(0);
 GPSXY = [data1.x_estimated data1.y_estimated];
 RotGPS = [cos(alp) sin(alp); -sin(alp) cos(alp)];
 GPS_estimated_cor = GPSXY*RotGPS ;
@@ -371,10 +420,11 @@ plot(Results.sim_Kalman.Time, Results.sim_Kalman.Data(:,4))
 hold on
 plot(Results2.sim_Kalman.Time, Results2.sim_Kalman.Data(:,4))
 plot(data1.Time,data1.Roll)
+plot(Results2.integration_rollrate.Time, Results2.integration_rollrate.Data)
 xlabel('Time (s)')
 ylabel('Roll (rad)')
 grid on
-legend('offline Kalman estimation','offline Kalman estimation Tuned R', 'Yixiao estimation')
+legend('offline Kalman estimation','offline Kalman estimation Tuned R', 'Yixiao estimation','Integration Rollrate')
 title('Comparison with Yixiao measurement data')
 
 subplot(424)
@@ -397,6 +447,15 @@ ylabel('Steering Angle (rad)')
 grid on
 legend('offline Kalman estimation','offline Kalman estimation Tuned R', 'Yixiao estimation')
 
+% subplot(427)
+% plot(Results.y_hat.Time,Results.y_hat.Data)
+% hold on
+% plot(Results2.integration_steerrate)
+% xlabel('Time (s)')
+% ylabel('velocity (m/s)')
+% grid on
+% legend('offline Kalman estimation','offline Kalman estimation Tuned R', 'Yixiao estimation')
+
 subplot(428)
 plot(Results.sim_Kalman.Time, Results.sim_Kalman.Data(:,7))
 hold on
@@ -406,6 +465,45 @@ xlabel('Time (s)')
 ylabel('velocity (m/s)')
 grid on
 legend('offline Kalman estimation','offline Kalman estimation Tuned R', 'Yixiao estimation')
+
+figure
+subplot(221)
+plot(Results.y_hat.Time,Results.y_hat.Data(:,1))
+hold on
+plot(measurements(:,1),measurements(:,2))
+xlabel('Time (s)')
+ylabel(' (m/s^2)')
+title('a_y')
+grid on
+legend('prediction','meas')
+subplot(222)
+plot(Results.y_hat.Time,Results.y_hat.Data(:,2))
+hold on
+plot(measurements(:,1),measurements(:,3))
+xlabel('Time (s)')
+ylabel(' (rad/s)')
+title('w_x')
+grid on
+legend('prediction','meas')
+subplot(223)
+plot(Results.y_hat.Time,Results.y_hat.Data(:,3))
+hold on
+plot(measurements(:,1),measurements(:,4))
+xlabel('Time (s)')
+ylabel(' (rad/s)')
+title('w_z')
+grid on
+legend('prediction','meas')
+subplot(224)
+plot(Results.y_hat.Time,Results.y_hat.Data(:,4))
+hold on
+plot(measurements(:,1),measurements(:,5))
+xlabel('Time (s)')
+ylabel(' (rad)')
+title('delta_enc')
+grid on
+legend('prediction','meas')
+
 else
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 fig = figure()
