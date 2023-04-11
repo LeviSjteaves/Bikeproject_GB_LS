@@ -36,7 +36,7 @@ clc;
 % bike model
     bike_model = 1; % 1 = non-linear model || 2 = linear model
 % Run all test cases
-    Run_tests = 0; % 0 = Don't run test cases || 1 = run test cases || 2 = generate ref yourself
+    Run_tests = 0; % 0 = Don't run test cases & save measurementdata in CSV || 1 = run test cases || 2 = generate ref yourself
 
 % Initial states
 
@@ -183,23 +183,22 @@ e1_max=abs(-k2*e2_max/k1);% k1,k2 has been known, so we can calculate e1_max
 Speed = v;
 % A matrix (linear bicycle model with constant velocity)
 % Est_States := [X Y psi phi phi_dot delta v]
-test_states = [1.3817 -0.3011 0 1 1 1 1]';
 
 A = [0 0 0 0 0 0 1;
      0 0 v 0 0 v*(lr/(lf+lr))*sin(lambda) 0;
      0 0 0 0 0 (v/(lr+lf))*sin(lambda) 0;
      0 0 0 0 1 0 0;
-     0 0 0 (g/h) 0 ((h*Speed^2-g*lr*c)/((lr+lf)*h^2))*sin(lambda) 0;
+     0 0 0 (g/h) 0 ((v^2*h-lr*g*c)/(h^2*(lr+lf)))*sin(lambda) 0;
      0 0 0 0 0 0 0;
      0 0 0 0 0 0 0];
 
 % B matrix (linear bicycle model with constant velocity)
-B = [0 0 0 0 ((lr*Speed)/((lr+lf)*h)) 1 0]';
+B = [0 0 0 0 ((lr*v)/(h*(lr+lf))) 1 0]';
 
 % Including GPS
 C1 = [1 0 0 0 0 0 0;
      0 1 0 0 0 0 0;
-     0 0 0 (-g+((-h_imu*g)/h)) 0 (-h_imu*(h*v^2-(g*lr*c)))*sin(lambda)/((lr+lf)*h^2)+(v^2)*sin(lambda)/(lr+lf) 0;
+     0 0 0 -g+((-h_imu*g)/h) 0 (-h_imu*(h*v^2-(g*lr*c)))*sin(lambda)/((lr+lf)*h^2) + (v^2)*sin(lambda)/(lr+lf) 0;
      0 0 0 0 1 0 0;
      0 0 0 0 0 (v)*sin(lambda)/(lr+lf) 0;
      0 0 0 0 0 1 0;
@@ -221,13 +220,56 @@ D2 = [(-h_imu*lr*v)/((lr+lf)*h) 0 0 0 0]';
 A_d = (eye(size(A))+Ts*A);
 B_d = Ts*B;
 
-result_test =  A_d*test_states + B_d*0.01;
+% Q and R matrix (tuned)
 
-% Q and R matrix
-Q = eye(7);
-Q2 = eye(4);
-R1 = eye(7);
-R2 = eye(5);
+% Parameters of Q
+% Q = eye(7);
+% Q2 = eye(4);
+
+Q_GPS = 0.2^2;
+Q_Psi = 1^2;
+Q_roll = deg2rad(0.1)^2;
+Q_rollrate = deg2rad(0.05)^2;
+Q_delta = deg2rad(0.05)^2;
+Q_v = 0.1^2;
+Qscale = 1;
+Q =Qscale* [Q_GPS 0 0 0 0 0 0;
+              0 Q_GPS 0 0 0 0 0;
+              0 0 Q_Psi 0 0 0 0;
+              0 0 0 Q_roll 0 0 0;
+              0 0 0 0 Q_rollrate 0 0;
+              0 0 0 0 0 Q_delta 0;
+              0 0 0 0 0 0 Q_v];
+
+Q2 =Qscale* [Q_roll 0 0 0;
+               0 Q_rollrate 0 0;
+               0 0 Q_delta 0;
+               0 0 0 Q_v];
+
+% Parameters of R
+% R1 = eye(7);
+% R2 = eye(5);
+
+R_GPS = 0.2^2;
+R_ay =deg2rad(1)^2;
+R_wx = deg2rad(1)^2;
+R_wz = deg2rad(1)^2;
+R_delta = 0.001^2;
+R_v = 10^2;
+Rscale = 1;
+R1 =Rscale* [R_GPS 0 0 0 0 0 0;
+              0 R_GPS 0 0 0 0 0;
+              0 0 R_ay 0 0 0 0;
+              0 0 0 R_wx 0 0 0;
+              0 0 0 0 R_wz 0 0;
+              0 0 0 0 0 R_delta 0;
+              0 0 0 0 0 0 R_v];
+
+R2 =Rscale* [R_ay 0 0 0 0;
+              0 R_wx 0 0 0;
+              0 0 R_wz 0 0;
+              0 0 0 R_delta 0;
+              0 0 0 0 R_v];
 
 % Compute Kalman Gain
     % including GPS
@@ -285,20 +327,19 @@ if Results.stop.Data(end) == 1
     disp('Message: End of the trajectory has been reached');
 end
 
-bikedata_simulation_bikestates = [Results.bike_states.Time Results.bike_states.Data];
+% save the states for offline kalman
+bikedata_simulation_bikestates = array2table([Results.bike_states.Time Results.bike_states.Data]);
 filename_simulation_bikestates = 'bikedata_simulation_bikestates.csv'; % Specify the filename
-csvwrite(filename_simulation_bikestates, bikedata_simulation_bikestates); % Write the matrix to the CSV file
+bikedata_simulation_bikestates.Properties.VariableNames(1:8) = {'Time', 'X', 'Y', 'Psi', 'Roll', 'Rollrate', 'Delta', 'Velocity'};
+writetable(bikedata_simulation_bikestates ,filename_simulation_bikestates);
 
-bikedata_simulation_estimation = [Results.measurements.Time Results.measurements.Data Results.steerrate_input.data];
-filename_simulation_estimation = 'bikedata_simulation_measurements.csv'; % Specify the filename
-csvwrite(filename_simulation_estimation, bikedata_simulation_estimation); % Write the matrix to the CSV file
+% save measurement data and estimations for offline kalman
+bikedata_simulation = array2table([Results.estimated_states.Time Results.estimated_states.Data Results.measurements.Data Results.steerrate_input.data]);
+filename_simulation= 'bikedata_simulink_simulation.csv'; % Specify the filename
+bikedata_simulation.Properties.VariableNames(1:16) = {'Time', 'X_estimated', 'Y_estimated', 'Psi_estimated', 'Roll_estimated', 'Rollrate_estimated', 'Delta_estimated', 'Velocity_estimated','GPS_X','GPS_Y','a_y','w_x','w_z','Delta_enc','Velocity','Steerrate'};
+writetable(bikedata_simulation,filename_simulation);
 
-bikedata_simulation_estimation = [Results.estimated_states.Time Results.estimated_states.Data];
-filename_simulation_estimation = 'bikedata_simulation_estimation.csv'; % Specify the filename
-csvwrite(filename_simulation_estimation, bikedata_simulation_estimation); % Write the matrix to the CSV file
-
-
-%% Ploting
+%% Plotting
 %name of the plot
 Tnumber = 'No test case: General simulation run';
         Plot_bikesimulation_results(Tnumber, Ts, test_curve, Results);
