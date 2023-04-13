@@ -12,9 +12,9 @@ clc;
     % Gravitational Acceleration
         g = 9.81;
     % Name of the model
-        model = 'Main_wrap_traj';
+        model = 'Main_bikesimulation';
     % Simulation time
-        sim_time = 100;
+        sim_time = 10;
     % Sampling Time
         Ts = 0.01; 
     % First closest point selection in reference 
@@ -189,6 +189,7 @@ den = [lr/(lr+lf), v/(lr+lf)];
 Ad_t = (eye(size(A_t))+Ts*A_t);
 Bd_t = B_t*Ts;
 end
+
 
 %% Kalman Filter
 
