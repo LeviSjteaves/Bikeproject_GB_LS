@@ -179,11 +179,9 @@ e2_max=deg2rad(30);%Here is the e2_max we used to calculate e1_max
 e1_max=abs(-k2*e2_max/k1);% k1,k2 has been known, so we can calculate e1_max
 
 %% Kalman Filter
-% g=-9.81;
-Speed = v;
+
 % A matrix (linear bicycle model with constant velocity)
 % Est_States := [X Y psi phi phi_dot delta v]
-
 A = [0 0 0 0 0 0 1;
      0 0 v 0 0 v*(lr/(lf+lr))*sin(lambda) 0;
      0 0 0 0 0 (v/(lr+lf))*sin(lambda) 0;
@@ -216,19 +214,14 @@ C2 = [(-g+((-h_imu*g)/h)) 0 (-h_imu*(h*v^2-(g*lr*c)))*sin(lambda)/((lr+lf)*h^2)+
 D2 = [(-h_imu*lr*v)/((lr+lf)*h) 0 0 0 0]';
 
 % Discretize the model
-% A_d = A;
 A_d = (eye(size(A))+Ts*A);
 B_d = Ts*B;
 
-% Q and R matrix (tuned)
-
+% Q and R matrix
 % Parameters of Q
-% Q = eye(7);
-% Q2 = eye(4);
-
 Q_GPS = 0.2^2;
 Q_Psi = 1^2;
-Q_roll = deg2rad(0.1)^2;
+Q_roll = deg2rad(0.01)^2;
 Q_rollrate = deg2rad(0.05)^2;
 Q_delta = deg2rad(0.05)^2;
 Q_v = 0.1^2;
@@ -241,23 +234,15 @@ Q =Qscale* [Q_GPS 0 0 0 0 0 0;
               0 0 0 0 0 Q_delta 0;
               0 0 0 0 0 0 Q_v];
 
-Q2 =Qscale* [Q_roll 0 0 0;
-               0 Q_rollrate 0 0;
-               0 0 Q_delta 0;
-               0 0 0 Q_v];
-
 % Parameters of R
-% R1 = eye(7);
-% R2 = eye(5);
-
 R_GPS = 0.2^2;
-R_ay =deg2rad(1)^2;
-R_wx = deg2rad(1)^2;
-R_wz = deg2rad(1)^2;
+R_ay =deg2rad(0.1)^2;
+R_wx = deg2rad(0.1)^2;
+R_wz = deg2rad(0.1)^2;
 R_delta = 0.001^2;
 R_v = 10^2;
 Rscale = 1;
-R1 =Rscale* [R_GPS 0 0 0 0 0 0;
+R =Rscale* [R_GPS 0 0 0 0 0 0;
               0 R_GPS 0 0 0 0 0;
               0 0 R_ay 0 0 0 0;
               0 0 0 R_wx 0 0 0;
@@ -265,27 +250,13 @@ R1 =Rscale* [R_GPS 0 0 0 0 0 0;
               0 0 0 0 0 R_delta 0;
               0 0 0 0 0 0 R_v];
 
-R2 =Rscale* [R_ay 0 0 0 0;
-              0 R_wx 0 0 0;
-              0 0 R_wz 0 0;
-              0 0 0 R_delta 0;
-              0 0 0 0 R_v];
-
 % Compute Kalman Gain
     % including GPS
-    [P1,Kalman_gain1,eig] = idare(A_d',C1',Q,R1,[],[]);
+    [P1,Kalman_gain1,eig] = idare(A_d',C1',Q,R,[],[]);
     eig1 = abs(eig);
     Kalman_gain1 = Kalman_gain1';
     Ts_GPS = 0.1; % sampling rate of the GPS
     counter = (Ts_GPS / Ts) - 1 ; % Upper limit of the counter for activating the flag
-
-    % excluding GPS
-    A_d2 = A_d;
-    A_d2(1:3,:) = [];
-    A_d2(:,1:3) = [];
-    [P2,Kalman_gain2,eig] = idare(A_d2',C2',Q2,R2,[],[]);
-    eig2 = abs(eig);
-    Kalman_gain2 = Kalman_gain2';
 
 % Polish the kalman gain (values <10-5 are set to zero)
 for i = 1:size(Kalman_gain1,1)
@@ -295,13 +266,9 @@ for i = 1:size(Kalman_gain1,1)
         end
     end
 end 
-for i = 1:size(Kalman_gain2,1)
-    for j = 1:size(Kalman_gain2,2)
-        if abs(Kalman_gain2(i,j)) < 10^-5
-            Kalman_gain2(i,j) = 0;
-        end
-    end
-end
+
+% Kalman_gain excluding GPS
+Kalman_gain2 = Kalman_gain1(4:7,3:7);
 
 %% Save matrix in XML/CSV
 
