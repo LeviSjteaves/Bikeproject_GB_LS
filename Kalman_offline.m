@@ -23,7 +23,7 @@ clc;
     
 %%%%%%%%%%%%%GUI%%%%%%%%%%%%%%%%%
 % reduce/increase simulation time for desired timescale on x-axis of the plots
-    sim_time = 30;
+    sim_time = 20;
 % 0 for Yixiao's measurement data, 1 for measurement data which is recorded during a simulation (infinity shape)
 % 2 for measurement data 'data' from labview
     select = 2;
@@ -276,52 +276,53 @@ toc
 % R_vector=[5*GPS_variance,5*heading_variance,0.0005*roll_variance,RollRate_variance,(0.0015)*SteeringAngle_variance,1000*v_estimated_variance,1];
 % 
 % [Q,R] = Q_R_modifier(Q_vector,R_vector);
-%             Q =[0.1 0 0 0 0 0 0;
-%               0 0.1 0 0 0 0 0;
-%               0 0 300 0 0 0 0;
-%               0 0 0 5e-5 0 0 0;
-%               0 0 0 0 1e-3 0 0;
-%               0 0 0 0 0 10 0;
-%               0 0 0 0 0 0 0.01];
-%             R =[3.244789 0 0 0 0 0 0;
-%               0 3.244789 0 0 0 0 0;
-%               0 0 2.073153 0 0 0 0;
-%               0 0 0 1.66e-6 0 0 0;
-%               0 0 0 0 0.0167315 0 0;
-%               0 0 0 0 0 7.117e-5 0;
-%               0 0 0 0 0 0 32.499];
 
-% Parameters of Q
-Q_GPS = 0.2^2;
-Q_Psi = 1^2;
-Q_roll = deg2rad(0.01)^2;
-Q_rollrate = deg2rad(0.05)^2;
-Q_delta = deg2rad(0.05)^2;
-Q_v = 0.1^2;
-Qscale = 1;
-Q =Qscale* [Q_GPS 0 0 0 0 0 0;
-              0 Q_GPS 0 0 0 0 0;
-              0 0 Q_Psi 0 0 0 0;
-              0 0 0 Q_roll 0 0 0;
-              0 0 0 0 Q_rollrate 0 0;
-              0 0 0 0 0 Q_delta 0;
-              0 0 0 0 0 0 Q_v];
+            Q =[0.1 0 0 0 0 0 0;
+              0 0.1 0 0 0 0 0;
+              0 0 300 0 0 0 0;
+              0 0 0 5e-5 0 0 0;
+              0 0 0 0 1e-3 0 0;
+              0 0 0 0 0 10 0;
+              0 0 0 0 0 0 0.01];
+            R =[3.244789 0 0 0 0 0 0;
+              0 3.244789 0 0 0 0 0;
+              0 0 2.073153 0 0 0 0;
+              0 0 0 1.66e-6 0 0 0;
+              0 0 0 0 0.0167315 0 0;
+              0 0 0 0 0 7.117e-5 0;
+              0 0 0 0 0 0 32.499];
 
-% Parameters of R
-R_GPS = 0.2^2;
-R_ay =deg2rad(0.1)^2;
-R_wx = deg2rad(0.1)^2;
-R_wz = deg2rad(0.1)^2;
-R_delta = 0.001^2;
-R_v = 10^2;
-Rscale = 1;
-R =Rscale* [R_GPS 0 0 0 0 0 0;
-              0 R_GPS 0 0 0 0 0;
-              0 0 R_ay 0 0 0 0;
-              0 0 0 R_wx 0 0 0;
-              0 0 0 0 R_wz 0 0;
-              0 0 0 0 0 R_delta 0;
-              0 0 0 0 0 0 R_v];
+% % Parameters of Q
+% Q_GPS = 0.2^2;
+% Q_Psi = 1^2;
+% Q_roll = deg2rad(0.01)^2;
+% Q_rollrate = deg2rad(0.05)^2;
+% Q_delta = deg2rad(0.05)^2;
+% Q_v = 0.1^2;
+% Qscale = 1;
+% Q =Qscale* [Q_GPS 0 0 0 0 0 0;
+%               0 Q_GPS 0 0 0 0 0;
+%               0 0 Q_Psi 0 0 0 0;
+%               0 0 0 Q_roll 0 0 0;
+%               0 0 0 0 Q_rollrate 0 0;
+%               0 0 0 0 0 Q_delta 0;
+%               0 0 0 0 0 0 Q_v];
+% 
+% % Parameters of R
+% R_GPS = 0.2^2;
+% R_ay =deg2rad(0.1)^2;
+% R_wx = deg2rad(0.1)^2;
+% R_wz = deg2rad(0.1)^2;
+% R_delta = 0.001^2;
+% R_v = 10^2;
+% Rscale = 1;
+% R =Rscale* [R_GPS 0 0 0 0 0 0;
+%               0 R_GPS 0 0 0 0 0;
+%               0 0 R_ay 0 0 0 0;
+%               0 0 0 R_wx 0 0 0;
+%               0 0 0 0 R_wz 0 0;
+%               0 0 0 0 0 R_delta 0;
+%               0 0 0 0 0 0 R_v];
 
 
 % Compute Kalman Gain
@@ -668,7 +669,7 @@ plot(data_lab.Time, data_lab.GyroscopeX_rad_s_)
 xlabel('Time (s)')
 ylabel('Roll Rate (rad/s)')
 grid on
-legend('offline Kalman estimation Tuned R', 'Online estimation')
+legend('offline Kalman estimation Tuned R', 'Online estimation', 'Measurement')
 
 subplot(426)
 plot(Results2.sim_Kalman.Time,Results2.sim_Kalman.Data(:,6))
@@ -678,7 +679,7 @@ plot(data_lab.Time,data_lab.SteeringAngleEncoder_rad_)
 xlabel('Time (s)')
 ylabel('Steering Angle (rad)')
 grid on
-legend('offline Kalman estimation Tuned R', 'Online estimation')
+legend('offline Kalman estimation Tuned R', 'Online estimation', 'Measurement')
 
 % subplot(427)
 % plot(Results.y_hat.Time,Results.y_hat.Data)
@@ -693,10 +694,11 @@ subplot(428)
 plot(Results2.sim_Kalman.Time, Results2.sim_Kalman.Data(:,7))
 hold on
 plot(data_lab.Time, data_lab.StateEstimateVelocity_m_s_)
+plot(data_lab.Time,data_lab.SpeedGPS_m_s_)
 xlabel('Time (s)')
 ylabel('velocity (m/s)')
 grid on
-legend('offline Kalman estimation Tuned R', 'Online estimation')
+legend('offline Kalman estimation Tuned R', 'Online estimation','Measurement')
 
 figure
 subplot(221)
