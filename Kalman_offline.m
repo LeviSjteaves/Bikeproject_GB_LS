@@ -263,6 +263,34 @@ end
 toc
 
 %% Comparing different Q R
+%% Computing R and Q
+
+% GPS_variance = variance_calculator(measurementsGPS(:,3),Results.sim_Kalman.Data(:,2),1);
+% heading_variance = variance_calculator(real_yaw,Results.sim_Kalman.Data(:,3),1);
+% roll_variance= variance_calculator(data1.Roll,Results.sim_Kalman.Data(:,4),0);
+% RollRate_variance = variance_calculator(data1.RollRate,Results.sim_Kalman.Data(:,5),0);
+% SteeringAngle_variance = variance_calculator(data1.SteeringAngle,Results.sim_Kalman.Data(:,6),0);
+% v_estimated_variance = variance_calculator(data1.v_estimated,Results.sim_Kalman.Data(:,7),0);
+% 
+% Q_vector=[1,3000,0.0005,0.01,100,0.1,0.1];
+% R_vector=[5*GPS_variance,5*heading_variance,0.0005*roll_variance,RollRate_variance,(0.0015)*SteeringAngle_variance,1000*v_estimated_variance,1];
+% 
+% [Q,R] = Q_R_modifier(Q_vector,R_vector);
+%             Q =[0.1 0 0 0 0 0 0;
+%               0 0.1 0 0 0 0 0;
+%               0 0 300 0 0 0 0;
+%               0 0 0 5e-5 0 0 0;
+%               0 0 0 0 1e-3 0 0;
+%               0 0 0 0 0 10 0;
+%               0 0 0 0 0 0 0.01];
+%             R =[3.244789 0 0 0 0 0 0;
+%               0 3.244789 0 0 0 0 0;
+%               0 0 2.073153 0 0 0 0;
+%               0 0 0 1.66e-6 0 0 0;
+%               0 0 0 0 0.0167315 0 0;
+%               0 0 0 0 0 7.117e-5 0;
+%               0 0 0 0 0 0 32.499];
+
 % Parameters of Q
 Q_GPS = 0.2^2;
 Q_Psi = 1^2;
@@ -295,20 +323,7 @@ R =Rscale* [R_GPS 0 0 0 0 0 0;
               0 0 0 0 0 R_delta 0;
               0 0 0 0 0 0 R_v];
 
-            Q =[0.1 0 0 0 0 0 0;
-              0 0.1 0 0 0 0 0;
-              0 0 300 0 0 0 0;
-              0 0 0 5e-5 0 0 0;
-              0 0 0 0 1e-3 0 0;
-              0 0 0 0 0 10 0;
-              0 0 0 0 0 0 0.01];
-            R =[3.244789 0 0 0 0 0 0;
-              0 3.244789 0 0 0 0 0;
-              0 0 2.073153 0 0 0 0;
-              0 0 0 1.66e-6 0 0 0;
-              0 0 0 0 0.0167315 0 0;
-              0 0 0 0 0 7.117e-5 0;
-              0 0 0 0 0 0 32.499];
+
 % Compute Kalman Gain
     % including GPS
     [P1,Kalman_gain1,eig] = idare(A_d',C1',Q,R,[],[]);
