@@ -23,7 +23,7 @@ clc;
     
 %%%%%%%%%%%%%GUI%%%%%%%%%%%%%%%%%
 % reduce/increase simulation time for desired timescale on x-axis of the plots
-    sim_time = 60;
+    sim_time = 30;
 % 0 for Yixiao's measurement data, 1 for measurement data which is recorded during a simulation (infinity shape)
 % 2 for measurement data 'data' from labview
     select = 2;
@@ -50,6 +50,7 @@ lambda = bike_params.lambda_mod;
 c = bike_params.c_mod;
 m = bike_params.m_mod;
 h_imu = bike_params.IMU_height_mod;
+gpsflag = [0 0];
 
 % Correction IMU
 IMU_x = bike_params.IMU_x_mod;
@@ -165,12 +166,13 @@ end
 
 if select == 2
 % Labview data
-longitude0 = deg2rad(data_lab.LongGPS_deg_(find(data_lab.flag==gps_delay)));
-latitude0 = deg2rad(data_lab.LatGPS_deg_(find(data_lab.flag==gps_delay)));
+gps_init = find(data_lab.flag>gps_delay, 1 );
+longitude0 = data_lab.LongGPS_deg_(gps_init);
+latitude0 = data_lab.LatGPS_deg_(gps_init);
 Earth_rad = 6371000.0;
 
-X = Earth_rad * (deg2rad(data_lab.LongGPS_deg_) - longitude0) * cos(latitude0);
-Y = Earth_rad * (deg2rad(data_lab.LatGPS_deg_) - latitude0);
+X = Earth_rad * (data_lab.LongGPS_deg_ - longitude0) * cos(latitude0);
+Y = Earth_rad * (data_lab.LatGPS_deg_ - latitude0);
 
 ay = data_lab.AccelerometerY_rad_s_2_;
 omega_x = data_lab.GyroscopeX_rad_s_;
@@ -180,9 +182,9 @@ v_enc = data_lab.SpeedGPS_m_s_;
 
 % Prepare measurement data for the offline kalman
 measurementsGPS = [data_lab.Time X Y];
-measurementsGPS(1:find(data_lab.flag==gps_delay),:) = [];
+measurementsGPS(1:gps_init,:) = [];
 measurements = [data_lab.Time ay omega_x omega_y delta_enc v_enc];
-measurements(1:find(data_lab.flag==gps_delay),:) = [];
+measurements(1,:) = [];
 steer_rate_blackbike = [data_lab.Time data_lab.drct];
 steer_rate_blackbike(1,:) = [];
 gpsflag = [data_lab.Time data_lab.flag];
@@ -293,6 +295,20 @@ R =Rscale* [R_GPS 0 0 0 0 0 0;
               0 0 0 0 0 R_delta 0;
               0 0 0 0 0 0 R_v];
 
+%             Q =[0.1 0 0 0 0 0 0;
+%               0 0.1 0 0 0 0 0;
+%               0 0 300 0 0 0 0;
+%               0 0 0 5e-5 0 0 0;
+%               0 0 0 0 1e-3 0 0;
+%               0 0 0 0 0 10 0;
+%               0 0 0 0 0 0 0.01];
+%             R =[3.244789 0 0 0 0 0 0;
+%               0 3.244789 0 0 0 0 0;
+%               0 0 2.073153 0 0 0 0;
+%               0 0 0 1.66e-6 0 0 0;
+%               0 0 0 0 0.0167315 0 0;
+%               0 0 0 0 0 7.117e-5 0;
+%               0 0 0 0 0 0 32.499];
 % Compute Kalman Gain
     % including GPS
     [P1,Kalman_gain1,eig] = idare(A_d',C1',Q,R,[],[]);
@@ -312,6 +328,12 @@ end
 
 % Kalman_gain excluding GPS
 Kalman_gain2 = Kalman_gain1(4:7,3:7);
+
+%save matrices
+matrixmat = [A_d; B_d'; C1; D1';Kalman_gain1];
+
+filename_matrix = 'matrixmat.csv'; % Specify the filename
+csvwrite(filename_matrix, matrixmat); % Write the matrix to the CSV file
 
 tic
 try Results2 = sim(model);
@@ -636,6 +658,7 @@ subplot(426)
 plot(Results2.sim_Kalman.Time,Results2.sim_Kalman.Data(:,6))
 hold on
 plot(data_lab.Time,data_lab.StateEstimateDelta_rad_)
+plot(data_lab.Time,data_lab.SteeringAngleEncoder_rad_)
 xlabel('Time (s)')
 ylabel('Steering Angle (rad)')
 grid on
@@ -654,6 +677,7 @@ subplot(428)
 plot(Results2.sim_Kalman.Time, Results2.sim_Kalman.Data(:,7))
 hold on
 plot(data_lab.Time, data_lab.StateEstimateVelocity_m_s_)
+plot(data_lab.Time, data_lab.SpeedGPS_m_s_)
 xlabel('Time (s)')
 ylabel('velocity (m/s)')
 grid on

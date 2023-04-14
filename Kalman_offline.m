@@ -23,7 +23,7 @@ clc;
     
 %%%%%%%%%%%%%GUI%%%%%%%%%%%%%%%%%
 % reduce/increase simulation time for desired timescale on x-axis of the plots
-    sim_time = 20;
+    sim_time = 30;
 % 0 for Yixiao's measurement data, 1 for measurement data which is recorded during a simulation (infinity shape)
 % 2 for measurement data 'data' from labview
     select = 2;
@@ -167,14 +167,14 @@ end
 if select == 2
 % Labview data
 gps_init = find(data_lab.flag>gps_delay, 1 );
-longitude0 = deg2rad(data_lab.LongGPS_deg_(gps_init));
-latitude0 = deg2rad(data_lab.LatGPS_deg_(gps_init));
+longitude0 = data_lab.LongGPS_deg_(gps_init);
+latitude0 = data_lab.LatGPS_deg_(gps_init);
 Earth_rad = 6371000.0;
 
-X = Earth_rad * (deg2rad(data_lab.LongGPS_deg_) - longitude0) * cos(latitude0);
-Y = Earth_rad * (deg2rad(data_lab.LatGPS_deg_) - latitude0);
+X = Earth_rad * (data_lab.LongGPS_deg_ - longitude0) * cos(latitude0);
+Y = Earth_rad * (data_lab.LatGPS_deg_ - latitude0);
 
-ay = data_lab.AccelerometerY_rad_s_2_;
+ay = -data_lab.AccelerometerY_rad_s_2_;
 omega_x = data_lab.GyroscopeX_rad_s_;
 omega_y = data_lab.GyroscopeZ_rad_s_;
 delta_enc = data_lab.SteeringAngleEncoder_rad_;
@@ -295,6 +295,20 @@ R =Rscale* [R_GPS 0 0 0 0 0 0;
               0 0 0 0 0 R_delta 0;
               0 0 0 0 0 0 R_v];
 
+            Q =[0.1 0 0 0 0 0 0;
+              0 0.1 0 0 0 0 0;
+              0 0 300 0 0 0 0;
+              0 0 0 5e-5 0 0 0;
+              0 0 0 0 1e-3 0 0;
+              0 0 0 0 0 10 0;
+              0 0 0 0 0 0 0.01];
+            R =[3.244789 0 0 0 0 0 0;
+              0 3.244789 0 0 0 0 0;
+              0 0 2.073153 0 0 0 0;
+              0 0 0 1.66e-6 0 0 0;
+              0 0 0 0 0.0167315 0 0;
+              0 0 0 0 0 7.117e-5 0;
+              0 0 0 0 0 0 32.499];
 % Compute Kalman Gain
     % including GPS
     [P1,Kalman_gain1,eig] = idare(A_d',C1',Q,R,[],[]);
@@ -635,6 +649,7 @@ subplot(424)
 plot(Results2.sim_Kalman.Time, Results2.sim_Kalman.Data(:,5))
 hold on
 plot(data_lab.Time, data_lab.StateEstimateRollrate_rad_s_)
+plot(data_lab.Time, data_lab.GyroscopeX_rad_s_)
 xlabel('Time (s)')
 ylabel('Roll Rate (rad/s)')
 grid on
@@ -644,6 +659,7 @@ subplot(426)
 plot(Results2.sim_Kalman.Time,Results2.sim_Kalman.Data(:,6))
 hold on
 plot(data_lab.Time,data_lab.StateEstimateDelta_rad_)
+plot(data_lab.Time,data_lab.SteeringAngleEncoder_rad_)
 xlabel('Time (s)')
 ylabel('Steering Angle (rad)')
 grid on
