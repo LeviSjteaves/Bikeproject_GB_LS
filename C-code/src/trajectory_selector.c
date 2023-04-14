@@ -15,59 +15,72 @@
  * @param Psi_loc           Local Heading from reference trajectory 
  *  
  * Parameters:
- * @param hor_dis           Horizon distance
- * @param ref_dis           Distance between the points
+ * @param Ns                Number of points in the local traj
  */
 
 
 // Main function
-extern void trajectory_selector(double *traj, double closest_point, double *X_loc, double *Y_loc, double *Psi_loc, double Ns, double reset)
+extern void trajectory_selector(double *traj, double closest_point, int Ns, double reset, double *traj_loc)
 {
     static double ids;
+    int size_traj = sizeof(traj) / 3; // length of the trajectory
 
     // Initialize the variables in first iteration
     if(reset == 0)
     {
-        ids = 0;
+        ids = 0; 
         closest_point = 1;
     }
 
     // Calculate the initial point of the local_traj_ref
     ids = ids - 1 + closest_point;
 
-    int M = ids + Ns;                   // index of the last point of the local trajectort
-    int n = sizeof(X)
+    // Transform the traj matrix into usable information 
+    double X_traj[size_traj];
+    double Y_traj[size_traj];
+    double Psi_traj[size_traj];
 
-    if (M > n)                      // if reached near end of traj, the local_traj becomes shorter
+    for(int j = 0; j < size_traj; j++)
     {
-        M = n;
-    }
-
-    // TODO: what happens when we reach the end of the trajectory
-
-    // Transform the traj matrix into usable information
-    int size = sizeof(traj) / 3;
-    double X_traj[size];
-    double Y_traj[size];
-    double Psi_traj[size];
-    double counter = 0;
-
-    for(int j = 0; j < size; j++)
-    {
-        X_traj[counter] = traj[j];
-        Y_traj[counter] = traj[j+size];
-        Psi_traj[counter] = traj[j+2*size];
-        counter += 1;
+        X_traj[j] = traj[j];
+        Y_traj[j] = traj[j + size_traj];
+        Psi_traj[j] = traj[j + 2*size_traj];
     }
 
     // Select the local_traj from traj
-    counter = 0;
-    for (int i = ids-1; i < M; i++)
+    int M = ids + Ns;                   // index of the last point of the local trajectort
+    int counter = 0;
+    double traj_loc_int[3*Ns];
+    
+    if (M < size_traj)
     {
-        *X_loc[counter] = X_traj[i];
-        *Y_loc[counter] = Y_traj[i];
-        *Psi_loc[counter] = Psi_traj[i];
-        counter += 1 ;
+        for (int i = ids-1; i < ids + Ns; i++)
+        {
+            traj_loc_int[counter] = X_traj[i];
+            traj_loc_int[counter + Ns] = Y_traj[i];
+            traj_loc_int[counter + 2*Ns] = Psi_traj[i];
+            counter += 1;
+        }
+    } 
+    else
+    {
+        for (int i = ids-1; i < size_traj; i++)
+        {
+            traj_loc_int[counter] = X_traj[i];
+            traj_loc_int[counter + Ns] = Y_traj[i];
+            traj_loc_int[counter + 2*Ns] = Psi_traj[i];
+            counter += 1;  
+        }  
+        for (int i = 0; i < (ids-1+Ns) - size_traj; i++)
+        {
+            // TODO: what happens when we reach the end of the trajectory
+            traj_loc_int[counter] = 0;
+            traj_loc_int[counter + Ns] = 0;
+            traj_loc_int[counter + 2*Ns] = 0;
+            counter += 1;
+        }
     }
+   
+    // *traj_loc = traj_loc_int;
 
 }

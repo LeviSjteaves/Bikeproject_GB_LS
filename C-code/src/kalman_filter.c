@@ -82,7 +82,7 @@ extern void transform_latlog_to_XY_l(double longitude, double latitude, double* 
     useLastValueIfNaN(&latitude, &lastLatitude);
     useLastValueIfNaN(&longitude, &lastLongitude);
 
-    if (!initializedLatLon && !isnan(latitude) && !isnan(longitude) && GPSflag > 1500)
+    if (!initializedLatLon && !isnan(latitude) && !isnan(longitude) && GPSflag > 100)
     {
         latitude0 = latitude;
         longitude0 = longitude;
@@ -93,11 +93,10 @@ extern void transform_latlog_to_XY_l(double longitude, double latitude, double* 
     {
         X_GPS_g = RADIUS_OF_THE_EARTH * (longitude - longitude0) * cos(latitude0);
         Y_GPS_g = RADIUS_OF_THE_EARTH * (latitude - latitude0);
+        // Transform to local
+        *X_GPS = X_GPS_g * cos(Est_States[2]) + Y_GPS_g * sin(Est_States[2]);
+        *Y_GPS = -X_GPS_g * sin(Est_States[2]) + Y_GPS_g * cos(Est_States[2]);
     }
-
-    // Transform to local
-    *X_GPS = X_GPS_g * cos(Est_States[2]) + Y_GPS_g * sin(Est_States[2]);
-    *Y_GPS = -X_GPS_g * sin(Est_States[2]) + Y_GPS_g * cos(Est_States[2]);
 }
 
 // Transform from global to local frame
@@ -155,7 +154,8 @@ extern void time_update(double Est_States_l[7], double dot_delta, double (*A_d)[
 }
 
 // Measurement update using the sensor data at time t
-extern void measurement_update(double Est_States_l_1[7], double dot_delta, double y[7], double (*Kalman_Gain)[7], double (*C)[7], double D[7], double Est_states_l[7], double GPSflag)
+extern void measurement_update(double Est_States_l_1[7], double dot_delta, double y[7], double (*Kalman_Gain)[7], double (*C)[7],
+                                double D[7], double Est_states_l[7], double GPSflag)
 {
     double y_pred[7] = {0,0,0,0,0,0,0};
     double result1[7] = {0,0,0,0,0,0,0};
@@ -163,9 +163,38 @@ extern void measurement_update(double Est_States_l_1[7], double dot_delta, doubl
     double result3 = 0;
     static double GPSflag_1 = 0;
 
-    //GPSflag_1 = GPSflag;  Always w/out GPS
-
-    if (GPSflag_1 == GPSflag) // Update w/out GPS
+    if (GPSflag_1 != GPSflag && GPSflag > 100) // Update with GPS
+    {
+        // C*x
+        for (int i = 0; i < 7; i++)
+        {
+            for (int j = 0; j < 7; j++)
+            {
+                result1[i] += C[i][j] * Est_States_l_1[j];
+            }
+        } 
+        // D*u
+        for(int k = 0; k < 7; k++)
+        {
+            result2[k] = D[k] * (dot_delta)  ;
+        } 
+        // y_pred = C1 * Est_States_l + D1 * dot_delta;
+        for(int h = 0; h < 7; h++) 
+        {
+            y_pred[h] = result1[h] + result2[h];
+        }
+        // Measurement update
+        for (int z = 0; z < 7; z++)
+        {
+        result3 = 0;
+            for (int l = 0; l < 7; l++)
+            {
+                result3 += Kalman_Gain[z][l] * (y[l] - y_pred[l]);
+            }
+        Est_states_l[z] = Est_States_l_1[z] + result3;
+        }
+    }
+    else // update w/out GPS
     {
         // CGPS*x
         for (int i = 2; i < 7; i++)
@@ -198,37 +227,6 @@ extern void measurement_update(double Est_States_l_1[7], double dot_delta, doubl
         Est_states_l[0] = Est_States_l_1[0];
         Est_states_l[1] = Est_States_l_1[1];
         Est_states_l[2] = Est_States_l_1[2];
-    }
-    else // update with GPS
-    {
-        // C*x
-        for (int i = 0; i < 7; i++)
-        {
-            for (int j = 0; j < 7; j++)
-            {
-                result1[i] += C[i][j] * Est_States_l_1[j];
-            }
-        } 
-        // D*u
-        for(int k = 0; k < 7; k++)
-        {
-            result2[k] = D[k] * (dot_delta)  ;
-        } 
-        // y_pred = C1 * Est_States_l + D1 * dot_delta;
-        for(int h = 0; h < 7; h++) 
-        {
-            y_pred[h] = result1[h] + result2[h];
-        }
-        // Measurement update
-        for (int z = 0; z < 7; z++)
-        {
-        result3 = 0;
-            for (int l = 0; l < 7; l++)
-            {
-                result3 += Kalman_Gain[z][l] * (y[l] - y_pred[l]);
-            }
-        Est_states_l[z] = Est_States_l_1[z] + result3;
-        }
     }
 
     // Set the actual flag to previous flag for next iteration
@@ -340,7 +338,7 @@ extern void Kalman_filter(double* X, double* Y, double* Psi, double* roll, doubl
     y[6] = speed;
 
     // c) Update
-    measurement_update(Est_States_l_1, dot_delta, y, Kalman_Gain, C, D, Est_states_l, GPSflag);
+     measurement_update(Est_States_l_1, dot_delta, y, Kalman_Gain, C, D, Est_states_l, GPSflag);
     //  for (int j = 0; j < 7; j++)
     // {
     // Est_states_l[j] = Est_States_l_1[j];

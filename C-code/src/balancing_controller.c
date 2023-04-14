@@ -13,5 +13,6 @@
  * @author Ossian Eriksson
 */
 extern double balancingController(double rollReference, double roll, double rollRate, double Kp, double Kd) {
-    return -(Kp * (roll - rollReference) + Kd * rollRate);
+    // return -(Kp*(roll-rollReference)+Kd*rollRate);
+    return ((Kp*(rollReference-roll)-rollRate)*Kd);
 }
