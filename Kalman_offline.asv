@@ -23,7 +23,7 @@ clc;
     
 %%%%%%%%%%%%%GUI%%%%%%%%%%%%%%%%%
 % reduce/increase simulation time for desired timescale on x-axis of the plots
-    sim_time = 50;
+    sim_time = 150;
 % 0 for Yixiao's measurement data, 1 for measurement data which is recorded during a simulation (infinity shape)
 % 2 for measurement data 'data' from labview
     select = 2;
