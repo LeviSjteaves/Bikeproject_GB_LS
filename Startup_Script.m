@@ -12,7 +12,7 @@ clc;
     % Gravitational Acceleration
         g = 9.81;
     % Name of the model
-        model = 'Main_wrap_traj';
+        model = 'Main_bikesim';
     % Simulation time
         sim_time = 100;
     % Sampling Time
@@ -23,7 +23,7 @@ clc;
     % Horizon distance [m]
         hor_dis = 1;
     % Constant Speed [m/s]
-        v = 3;    
+        v = 2;    
 
 % Open the Simulink Model
     open([model '.slx']);
@@ -154,12 +154,12 @@ T = Rz*Ry*Rx;
 %% Balancing Controller
 
 % Outer loop -- Roll Tracking
-P_balancing_outer = 1.3;
+P_balancing_outer = 1.75;
 I_balancing_outer = 0.0;
 D_balancing_outer = 0.0;
 
 % Inner loop -- Balancing
-P_balancing_inner = 3;
+P_balancing_inner = 1;
 I_balancing_inner = 0;
 D_balancing_inner = 0;  
 
@@ -179,8 +179,8 @@ e2_max=deg2rad(30);%Here is the e2_max we used to calculate e1_max
 e1_max=abs(-k2*e2_max/k1);% k1,k2 has been known, so we can calculate e1_max
 
 %% Transfer function for heading in wrap traj
-if model == "Main_wrap_traj"
-% Trasnform tf into ss
+
+% Transform tf into ss
 num = 1;
 den = [lr/(lr+lf), v/(lr+lf)];
 [A_t, B_t, C_t, D_t] = tf2ss(num,den);
@@ -188,7 +188,6 @@ den = [lr/(lr+lf), v/(lr+lf)];
 % Discretize the ss
 Ad_t = (eye(size(A_t))+Ts*A_t);
 Bd_t = B_t*Ts;
-end
 
 %% Kalman Filter
 
