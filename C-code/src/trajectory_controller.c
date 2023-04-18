@@ -76,20 +76,10 @@ double wrap_angle(double angle) {
     return wrapped_angle - M_PI;
 }
 
-extern void trajectory_controller(double *traj_loc, double X_est, double Y_est, double Psi_est, double v, double*bike_params, 
-                                    double *traj_params, double Ad_t, double Bd_t, double C_t, double D_t, double *roll_ref, int *closestpoint_idx_out)
+extern void trajectory_controller(double *traj_loc, double X_est, double Y_est, double Psi_est, double v, double lr, double lf, double lambda, double k1, 
+                                  double k2, double e1_max, double Ad_t, double Bd_t, double C_t, double D_t, double *roll_ref, int32_t *closestpoint_idx_out,
+                                  double *error1, double *error2)
 {
-    // unpack parameters
-    double lr, lf,lambda;
-    lr = bike_params[0];
-    lf = bike_params[1];
-    lambda = bike_params[2];
-
-    double k1,k2,e1_max;
-    k1 = traj_params[0];
-    k2 = traj_params[1];
-    e1_max = traj_params[2];
-
     // Unpack the trajectory
     int size_traj_loc = sizeof(traj_loc) / 3; // length of the trajectory
     double X_loc[size_traj_loc];
@@ -166,6 +156,9 @@ extern void trajectory_controller(double *traj_loc, double X_est, double Y_est, 
     // Keep heading error between -pi and pi
     e2 = wrap_angle(e2);
 
+    *error1 = e1;
+    *error2 = e2;
+
     // Compute time between psiref(idx) and psiref(idx+1)
     double dX = X_loc[closestpoint_idx+1] - ref_X;
     double dY = Y_loc[closestpoint_idx+1] - ref_Y;
@@ -208,5 +201,8 @@ extern void trajectory_controller(double *traj_loc, double X_est, double Y_est, 
     // Transform steering reference into roll reference for the balance control
     double eff_delta_ref = delta_ref*sin(lambda);
     *roll_ref = -1*atan(tan(eff_delta_ref)*(pow(v,2.0)/(lr+lf))/g);
+    // *roll_ref = 1;
+    // *closestpoint_idx_out = 2;
+
 
  }

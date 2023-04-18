@@ -14,7 +14,7 @@ clc;
     % Name of the model
         model = 'Main_bikesim';
     % Simulation time
-        sim_time = 100;
+        sim_time = 15;
     % Sampling Time
         Ts = 0.01; 
     % First closest point selection in reference 
@@ -154,12 +154,12 @@ T = Rz*Ry*Rx;
 %% Balancing Controller
 
 % Outer loop -- Roll Tracking
-P_balancing_outer = 1.75;
+P_balancing_outer = 3;
 I_balancing_outer = 0.0;
 D_balancing_outer = 0.0;
 
 % Inner loop -- Balancing
-P_balancing_inner = 1;
+P_balancing_inner = 5.5;
 I_balancing_inner = 0;
 D_balancing_inner = 0;  
 
