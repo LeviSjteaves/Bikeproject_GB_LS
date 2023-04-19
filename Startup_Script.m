@@ -21,7 +21,7 @@ clc;
     % Starts at 2 because the one before closest is in the local reference as well
         ref_start_idx = 2;
     % Horizon distance [m]
-        hor_dis = 1;
+        hor_dis = 10;
     % Constant Speed [m/s]
         v = 2;    
 
@@ -54,11 +54,11 @@ clc;
 %% Reference trajectory generation
 
 % SHAPE options: sharp_turn, line, infinite, circle, ascent_sin, smooth_curve
-type = 'circle';
+type = 'infinite';
 % Distance between points
 ref_dis = 0.05;
 % Number# of reference points
-N = 600; 
+N = 100; 
 % Scale (only for infinite and circle)
 scale = 10; 
 
@@ -301,9 +301,9 @@ end
 toc
 
 % Simulation Messages and Warnings
-if Results.stop.Data(end) == 1
-    disp('Message: End of the trajectory has been reached');
-end
+% if Results.stop.Data(end) == 1
+%     disp('Message: End of the trajectory has been reached');
+% end
 
 % save the states for offline kalman
 bikedata_simulation_bikestates = array2table([Results.bike_states.Time Results.bike_states.Data]);

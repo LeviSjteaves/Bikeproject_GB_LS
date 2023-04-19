@@ -30,7 +30,7 @@ clc;
 % Take into account a valid speed. 
 % Yixiao's measurements: 0-2 m/s.
 % Simulation measurements: 3 m/s
-    v=3; 
+    v=0.5; 
 % set the initial global coordinate system for gps coordinates
     gps_delay = 100;
 % Choose The Bike - Options: 'red' or 'black' 
@@ -150,8 +150,8 @@ measurementsGPS = [data_Yi.GPS_timestamp X Y];
 measurementsGPS(1,:) = [];
 measurements = [data_Yi.Time ay omega_x omega_y delta_enc v_enc];
 measurements(1,:) = [];
-steer_rate_blackbike = [data_Yi.Time data_Yi.SteeringAngle];
-steer_rate_blackbike(1,:) = [];
+steer_rate = [data_Yi.Time data_Yi.SteeringAngle];
+steer_rate(1,:) = [];
 end 
 
 if select == 1
@@ -160,15 +160,14 @@ measurementsGPS = [data_sim.Time data_sim.GPS_X data_sim.GPS_Y];
 measurementsGPS(1,:) = [];
 measurements = [data_sim.Time data_sim.a_y data_sim.w_x data_sim.w_z data_sim.Delta_enc data_sim.Velocity];
 measurements(1,:) = [];
-steer_rate_blackbike = [data_sim.Time data_sim.Steerrate];
-steer_rate_blackbike(1,:) = [];
+steer_rate = [data_sim.Time data_sim.Steerrate];
+steer_rate(1,:) = [];
 end
 
 if select == 2
 % Labview data
 gps_init = find(data_lab.flag>gps_delay, 1 );
-% longitude0 = data_lab.LongGPS_deg_(gps_init);
-longitude0 = 0.2090892692;
+longitude0 = data_lab.LongGPS_deg_(gps_init);
 latitude0 = data_lab.LatGPS_deg_(gps_init);
 Earth_rad = 6371000.0;
 
@@ -186,8 +185,8 @@ measurementsGPS = [data_lab.Time X Y];
 measurementsGPS(1:gps_init,:) = [];
 measurements = [data_lab.Time ay omega_x omega_y delta_enc v_enc];
 measurements(1,:) = [];
-steer_rate_blackbike = [data_lab.Time data_lab.drct];
-steer_rate_blackbike(1,:) = [];
+steer_rate = [data_lab.Time data_lab.SteerrateInput_rad_s_];
+steer_rate(1,:) = [];
 gpsflag = [data_lab.Time data_lab.flag];
 end
 
@@ -277,21 +276,24 @@ toc
 % R_vector=[5*GPS_variance,5*heading_variance,0.0005*roll_variance,RollRate_variance,(0.0015)*SteeringAngle_variance,1000*v_estimated_variance,1];
 % 
 % [Q,R] = Q_R_modifier(Q_vector,R_vector);
+% 
+%             Q =[1 0 0 0 0 0 0;
+%               0 1 0 0 0 0 0;
+%               0 0 300 0 0 0 0;
+%               0 0 0 5e-5 0 0 0;
+%               0 0 0 0 1e-3 0 0;
+%               0 0 0 0 0 10 0;
+%               0 0 0 0 0 0 0.01];
+%             R =[1 0 0 0 0 0 0;
+%               0 1 0 0 0 0 0;
+%               0 0 2.073153 0 0 0 0;
+%               0 0 0 1.66e-6 0 0 0;
+%               0 0 0 0 0.0167315 0 0;
+%               0 0 0 0 0 7.117e-5 0;
+%               0 0 0 0 0 0 32.499];
 
-            Q =[0.1 0 0 0 0 0 0;
-              0 0.1 0 0 0 0 0;
-              0 0 300 0 0 0 0;
-              0 0 0 5e-5 0 0 0;
-              0 0 0 0 1e-3 0 0;
-              0 0 0 0 0 10 0;
-              0 0 0 0 0 0 0.01];
-            R =[3.244789 0 0 0 0 0 0;
-              0 3.244789 0 0 0 0 0;
-              0 0 2.073153 0 0 0 0;
-              0 0 0 1.66e-6 0 0 0;
-              0 0 0 0 0.0167315 0 0;
-              0 0 0 0 0 7.117e-5 0;
-              0 0 0 0 0 0 32.499];
+Q = eye(7);
+R = eye(7);
 
 % % Parameters of Q
 % Q_GPS = 0.2^2;
@@ -606,12 +608,13 @@ end
 %labview data
 if select == 2
 fig = figure();
-plot(Results.sim_Kalman.Data(:,1), Results.sim_Kalman.Data(:,2))
+plot(Results2.sim_Kalman.Data(:,1), Results2.sim_Kalman.Data(:,2))
 hold on
 plot(data_lab.StateEstimateX_m_ ,data_lab.StateEstimateY_m_)
 plot(measurementsGPS(:,2),measurementsGPS(:,3))
 xlabel('X position (m)')
 ylabel('Y position (m)')
+axis equal
 grid on
 legend('offline Kalman estimation', 'online estimation','GPS measurements')
 title('Comparison with Kalman estimator on bike')
@@ -682,14 +685,16 @@ ylabel('Steering Angle (rad)')
 grid on
 legend('offline Kalman estimation Tuned R', 'Online estimation', 'Measurement')
 
-% subplot(427)
-% plot(Results.y_hat.Time,Results.y_hat.Data)
-% hold on
-% plot(Results2.integration_steerrate)
-% xlabel('Time (s)')
-% ylabel('velocity (m/s)')
-% grid on
-% legend('offline Kalman estimation','offline Kalman estimation Tuned R', 'Yixiao estimation')
+subplot(427)
+plot(data_lab.Time,data_lab.Error1)
+xlabel('Time (s)')
+ylabel('error1 (m)')
+hold on
+yyaxis right
+plot(data_lab.Time,data_lab.Error2)
+ylabel('error2 [Deg]')
+grid on
+legend('error1','error2')
 
 subplot(428)
 plot(Results2.sim_Kalman.Time, Results2.sim_Kalman.Data(:,7))
@@ -703,7 +708,7 @@ legend('offline Kalman estimation Tuned R', 'Online estimation','Measurement')
 
 figure
 subplot(221)
-plot(Results.y_hat.Time,Results.y_hat.Data(:,1))
+plot(Results2.y_hat.Time,Results2.y_hat.Data(:,1))
 hold on
 plot(measurements(:,1),measurements(:,2))
 xlabel('Time (s)')
@@ -711,8 +716,9 @@ ylabel(' (m/s^2)')
 title('a_y')
 grid on
 legend('prediction','meas')
+
 subplot(222)
-plot(Results.y_hat.Time,Results.y_hat.Data(:,2))
+plot(Results2.y_hat.Time,Results2.y_hat.Data(:,2))
 hold on
 plot(measurements(:,1),measurements(:,3))
 xlabel('Time (s)')
@@ -720,8 +726,9 @@ ylabel(' (rad/s)')
 title('w_x')
 grid on
 legend('prediction','meas')
+
 subplot(223)
-plot(Results.y_hat.Time,Results.y_hat.Data(:,3))
+plot(Results2.y_hat.Time,Results2.y_hat.Data(:,3))
 hold on
 plot(measurements(:,1),measurements(:,4))
 xlabel('Time (s)')
@@ -729,8 +736,9 @@ ylabel(' (rad/s)')
 title('w_z')
 grid on
 legend('prediction','meas')
+
 subplot(224)
-plot(Results.y_hat.Time,Results.y_hat.Data(:,4))
+plot(Results2.y_hat.Time,Results2.y_hat.Data(:,4))
 hold on
 plot(measurements(:,1),measurements(:,6))
 xlabel('Time (s)')
