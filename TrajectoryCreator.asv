@@ -1,4 +1,4 @@
-function  TrajectoryCreator()
+function  [trajectory]=TrajectoryCreator()
 % Create a GUI with buttons to plot different shapes, set their initial positions,
 % and save their data
 clc;
