@@ -14,7 +14,7 @@ clc;
     % Name of the model
         model = 'Main_bikesim';
     % Simulation time
-        sim_time = 200;
+        sim_time = 15;
     % Sampling Time
         Ts = 0.01; 
     % First closest point selection in reference 
@@ -54,11 +54,11 @@ clc;
 %% Reference trajectory generation
 
 % SHAPE options: sharp_turn, line, infinite, circle, ascent_sin, smooth_curve
-type = 'circle';
+type = 'infinite';
 % Distance between points
 ref_dis = 0.05;
 % Number# of reference points
-N = 1000; 
+N = 100; 
 % Scale (only for infinite and circle)
 scale = 10; 
 
@@ -154,12 +154,12 @@ T = Rz*Ry*Rx;
 %% Balancing Controller
 
 % Outer loop -- Roll Tracking
-P_balancing_outer = 1.3;
+P_balancing_outer = 3;
 I_balancing_outer = 0.0;
 D_balancing_outer = 0.0;
 
 % Inner loop -- Balancing
-P_balancing_inner = 3;
+P_balancing_inner = 5.5;
 I_balancing_inner = 0;
 D_balancing_inner = 0;  
 
