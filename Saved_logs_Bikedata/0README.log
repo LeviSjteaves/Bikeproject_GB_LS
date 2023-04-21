@@ -1,27 +1,3 @@
-Make sure the Time column is set (manually in excel). use: I#=(H#-$H$2)*0.001 (where # is the row)
-Remove all NaN values.
-
 To use data in offline kalman. copy the file in this directory, call it 'data.csv' and move it to Bikeproject_GB_LS.
 Now you can run the Kalman_Offline script.
 
-OUTSIDE
-data1
-kp 1 kd 0.5 walking by hand
-data2
-kp 1 kd 0.5 running
-data3
-kp 1 kd 0.5 running
-data4
-kp 1 kd 0.5 running and give push
-data5
-Running give push/fall
-
-INSIDE
-data1
-Kp 1.5 kd 0.8 1.25 m/s (4rad/sec)
-
-STANDSTIL
-data1
-long test with slowroll/fastroll/heavydelta 0m/s
-data2
-long test with slowroll/fastroll/heavydelta 3m/s

@@ -12,6 +12,7 @@ default_x = 0;
 default_y = 0;
 default_head = 90;
 trajectory = [0;0];
+global n;
 
 
         filename = 'trajectory.txt';
@@ -271,7 +272,15 @@ figure('Name','Example of segment','Position', [1050, 100, 500, 500])
         hold on
         
         trajectory = [trajectory(1,:) x; trajectory(2,:) y];
-        
+        psiref = atan2(trajectory(2,2:n)-trajectory(2,1:n-1),trajectory(1,2:n)-trajectory(1,1:n-1));
+
+        trajectory = [trajectory(1,:); trajectory(2,:); psiref(1) psiref(1) psiref]';
+        trajectory(1,:) = [];
+
+        filename_trajectory = 'trajectorymat.csv'; % Specify the filename
+        dlmwrite( filename_trajectory, trajectory, 'delimiter', ',', 'precision', 10);
+
+
         dlmwrite(filename, trajectory', 'delimiter', '\t');
         set(startline_x,'String',x(end));
         set(startline_y,'String',y(end));

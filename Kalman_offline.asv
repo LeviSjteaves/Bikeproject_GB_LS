@@ -387,7 +387,7 @@ traj(:,1) = traj(:,1) + offset_X;
 traj(:,2) = traj(:,2) + offset_Y;
 traj(:,3) = traj(:,3) + offset_Psi;
 GPSXY = [traj(:,1:2)];
-RotGPS = [cos(offset_Psi) sin(offset_Psi); -sin(offset_Psi) cos(offset_Psi)];
+RotGPS = [cos(alp) sin(alp); -sin(alp) cos(alp)];
 traj(:,1:2) = GPSXY*RotGPS;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

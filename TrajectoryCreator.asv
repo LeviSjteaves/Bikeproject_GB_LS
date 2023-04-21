@@ -1,4 +1,8 @@
+<<<<<<< Updated upstream
 function  [trajectory]=TrajectoryCreator()
+=======
+function  test_trajectory()
+>>>>>>> Stashed changes
 % Create a GUI with buttons to plot different shapes, set their initial positions,
 % and save their data
 clc;
@@ -12,6 +16,10 @@ default_x = 0;
 default_y = 0;
 default_head = 90;
 trajectory = [0;0];
+<<<<<<< Updated upstream
+=======
+global n;
+>>>>>>> Stashed changes
 
 
         filename = 'trajectory.txt';
@@ -271,6 +279,15 @@ figure('Name','Example of segment','Position', [1050, 100, 500, 500])
         hold on
         
         trajectory = [trajectory(1,:) x; trajectory(2,:) y];
+<<<<<<< Updated upstream
+=======
+        psiref = atan2(trajectory(2,2:n)-trajectory(2,1:n-1),trajectory(1,2:n)-trajectory(1,1:n-1));
+
+        trajectory = [trajectory(1,:); trajectory(2,:); psiref(1) psiref];
+
+        filename_trajectory = 'trajectorymat.csv'; % Specify the filename
+        csvwrite(filename_trajectory, trajectory); % Write the matrix to the CSV file
+>>>>>>> Stashed changes
         
         dlmwrite(filename, trajectory', 'delimiter', '\t');
         set(startline_x,'String',x(end));
