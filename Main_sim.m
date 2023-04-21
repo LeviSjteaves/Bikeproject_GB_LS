@@ -14,11 +14,8 @@ clc;
     % Name of the model
         model = 'Main_bikesim';
     % Simulation time
-<<<<<<< Updated upstream:Main_sim.m
         sim_time = 200;
-=======
-        sim_time = 100;
->>>>>>> Stashed changes:Startup_Script.m
+
     % Sampling Time
         Ts = 0.01; 
     % First closest point selection in reference 
@@ -58,11 +55,7 @@ clc;
 %% Reference trajectory generation
 
 % SHAPE options: sharp_turn, line, infinite, circle, ascent_sin, smooth_curve
-<<<<<<< Updated upstream:Main_sim.m
 type = 'circle';
-=======
-type = 'line';
->>>>>>> Stashed changes:Startup_Script.m
 % Distance between points
 ref_dis = 1;
 % Number# of reference points
@@ -89,7 +82,7 @@ Output_reference_test = referenceTest(test_curve,hor_dis,Ts,initial_pose,v, ref_
 
 %update initial states if offset is detected
 initial_state.x = Output_reference_test(1);
-initial_state.y = Output_reference_test(2)+4;
+initial_state.y = Output_reference_test(2);
 initial_state.heading = Output_reference_test(3);
 initial_pose = [initial_state.x; initial_state.y; initial_state.heading];
 initial_state_estimate = initial_state;

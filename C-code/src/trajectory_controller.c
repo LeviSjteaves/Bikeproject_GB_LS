@@ -82,7 +82,7 @@ double wrap_angle(double angle)
 extern void trajectory_controller(double *traj, int32_t *traj_size, double X_est, double Y_est, double Psi_est,
                                   double v, double lr, double lf, double lambda, double k1, double k2, double e1_max,
                                   double Ad_t, double Bd_t, double C_t, double D_t, double *roll_ref, int32_t *closestpoint_idx_out,
-                                  double *error1, double *error2, double reset)
+                                  double *e1_out, double *e2_out, double *delta_ref_psi_out, double *lat_err_cont, double *head_err_cont, double reset)
 {
     // Unpack the trajectory
     int size_traj = traj_size[0]; // length of the trajectory
@@ -168,9 +168,6 @@ extern void trajectory_controller(double *traj, int32_t *traj_size, double X_est
     // Keep heading error between -pi and pi
     e2 = wrap_angle(e2);
 
-    *error1 = e1;
-    *error2 = e2;
-
     // Compute time between psiref(idx) and psiref(idx+1)
     double dX = X_loc[closestpoint_idx + 1] - ref_X;
     double dY = Y_loc[closestpoint_idx + 1] - ref_Y;
@@ -213,4 +210,11 @@ extern void trajectory_controller(double *traj, int32_t *traj_size, double X_est
     // Transform steering reference into roll reference for the balance control
     double eff_delta_ref = delta_ref * sin(lambda);
     *roll_ref = -1 * atan(tan(eff_delta_ref) * (pow(v, 2.0) / (lr + lf)) / g);
+
+    // Output different variables that will give us important info for validation
+    *e1_out = e1;
+    *e2_out = e2;
+    *delta_ref_psi_out = delta_ref_psi;
+    *lat_err_cont = -k1 * sign(e1) * min(fabs(e1), e1_max);
+    *head_err_cont = - k2 * e2;
 }

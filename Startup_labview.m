@@ -25,6 +25,15 @@ clc;
 trajectory = readtable('trajectorymat.csv');
 traj = table2array(trajectory);
 
+offset_X = 0;
+offset_Y = 0;
+offset_Psi = 0;
+
+% ADD offset in the trajectory if needed
+traj(:,1) = traj(:,1) + offset_X;
+traj(:,2) = traj(:,2) + offset_Y;
+traj(:,3) = traj(:,3) + offset_Psi;
+
 %% Initial states
 % Initial states
 initial_X = traj(1,1);
@@ -128,12 +137,12 @@ B_d = Ts*B;
 
 % Q and R matrix
 % Parameters of Q
-Q_GPS = 0.2^2;
-Q_Psi = 1^2;
-Q_roll = deg2rad(0.01)^2;
-Q_rollrate = deg2rad(0.05)^2;
-Q_delta = deg2rad(0.05)^2;
-Q_v = 0.1^2;
+Q_GPS = 0.1;
+Q_Psi = 0.1;
+Q_roll = 1e-9;
+Q_rollrate = 5;
+Q_delta = 10;
+Q_v = 0.5;
 Qscale = 1;
 Q =Qscale* [Q_GPS 0 0 0 0 0 0;
               0 Q_GPS 0 0 0 0 0;
@@ -144,12 +153,12 @@ Q =Qscale* [Q_GPS 0 0 0 0 0 0;
               0 0 0 0 0 0 Q_v];
 
 % Parameters of R
-R_GPS = 0.2^2;
-R_ay =deg2rad(0.1)^2;
-R_wx = deg2rad(0.1)^2;
-R_wz = deg2rad(0.1)^2;
-R_delta = 0.001^2;
-R_v = 10^2;
+R_GPS = 1.567682871320335;
+R_ay = 0.256431376435930;
+R_wx = 3.941639024088922e-12;
+R_wz = 0.023363599865703;
+R_delta = 4.175280633723090e-04;
+R_v = 0.1;
 Rscale = 1;
 R =Rscale* [R_GPS 0 0 0 0 0 0;
               0 R_GPS 0 0 0 0 0;

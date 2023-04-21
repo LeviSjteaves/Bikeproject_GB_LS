@@ -25,6 +25,9 @@ clc;
 trajectory = readtable('trajectorymat.csv');
 traj = table2array(trajectory);
 
+% ADD offset in the trajectory if needed
+for(i=0,)
+
 %% Initial states
 % Initial states
 initial_X = traj(1,1);
@@ -46,6 +49,7 @@ c = bike_params.c;
 m = bike_params.m;
 h_imu = bike_params.IMU_height; 
 r_wheel = bike_params.r_wheel; 
+
 
 
 %% Balancing Controller
