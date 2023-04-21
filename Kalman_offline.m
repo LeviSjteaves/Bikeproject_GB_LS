@@ -32,7 +32,7 @@ clc;
 % Simulation measurements: 3 m/s
     v=1; 
 % set the initial global coordinate system for gps coordinates
-    gps_delay = 100;
+    gps_delay = 50;
 % Choose The Bike - Options: 'red' or 'black' 
 % Yixiao uses black 
 % Simulation uses red
@@ -272,69 +272,58 @@ end
 toc
 
 %% Comparing different Q R
-%% Computing R and Q
 
-% GPS_variance = variance_calculator(measurementsGPS(:,3),Results.sim_Kalman.Data(:,2),1);
-% heading_variance = variance_calculator(real_yaw,Results.sim_Kalman.Data(:,3),1);
-% roll_variance= variance_calculator(data1.Roll,Results.sim_Kalman.Data(:,4),0);
-% RollRate_variance = variance_calculator(data1.RollRate,Results.sim_Kalman.Data(:,5),0);
-% SteeringAngle_variance = variance_calculator(data1.SteeringAngle,Results.sim_Kalman.Data(:,6),0);
-% v_estimated_variance = variance_calculator(data1.v_estimated,Results.sim_Kalman.Data(:,7),0);
 % 
-% Q_vector=[1,3000,0.0005,0.01,100,0.1,0.1];
-% R_vector=[5*GPS_variance,5*heading_variance,0.0005*roll_variance,RollRate_variance,(0.0015)*SteeringAngle_variance,1000*v_estimated_variance,1];
-% 
-% [Q,R] = Q_R_modifier(Q_vector,R_vector);
-% 
-            Q =[1 0 0 0 0 0 0;
-              0 1 0 0 0 0 0;
-              0 0 1 0 0 0 0;
-              0 0 0 5e-5 0 0 0;
-              0 0 0 0 1e-3 0 0;
-              0 0 0 0 0 10 0;
-              0 0 0 0 0 0 0.01];
-            R =[1 0 0 0 0 0 0;
-              0 1 0 0 0 0 0;
-              0 0 2.073153 0 0 0 0;
-              0 0 0 1.66e-6 0 0 0;
-              0 0 0 0 0.0167315 0 0;
-              0 0 0 0 0 7.117e-5 0;
-              0 0 0 0 0 0 32.499];
+%             Q =[1 0 0 0 0 0 0;
+%               0 1 0 0 0 0 0;
+%               0 0 1 0 0 0 0;
+%               0 0 0 5e-5 0 0 0;
+%               0 0 0 0 1e-3 0 0;
+%               0 0 0 0 0 10 0;
+%               0 0 0 0 0 0 0.01];
+%             R =[1 0 0 0 0 0 0;
+%               0 1 0 0 0 0 0;
+%               0 0 2.073153 0 0 0 0;
+%               0 0 0 1.66e-6 0 0 0;
+%               0 0 0 0 0.0167315 0 0;
+%               0 0 0 0 0 7.117e-5 0;
+%               0 0 0 0 0 0 32.499];
 
 % Q = eye(7);
 % R = eye(7);
 
-% % Parameters of Q
-% Q_GPS = 0.2^2;
-% Q_Psi = 1^2;
-% Q_roll = deg2rad(0.01)^2;
-% Q_rollrate = deg2rad(0.05)^2;
-% Q_delta = deg2rad(0.05)^2;
-% Q_v = 0.1^2;
-% Qscale = 1;
-% Q =Qscale* [Q_GPS 0 0 0 0 0 0;
-%               0 Q_GPS 0 0 0 0 0;
-%               0 0 Q_Psi 0 0 0 0;
-%               0 0 0 Q_roll 0 0 0;
-%               0 0 0 0 Q_rollrate 0 0;
-%               0 0 0 0 0 Q_delta 0;
-%               0 0 0 0 0 0 Q_v];
-% 
-% % Parameters of R
-% R_GPS = 0.2^2;
-% R_ay =deg2rad(0.1)^2;
-% R_wx = deg2rad(0.1)^2;
-% R_wz = deg2rad(0.1)^2;
-% R_delta = 0.001^2;
-% R_v = 10^2;
-% Rscale = 1;
-% R =Rscale* [R_GPS 0 0 0 0 0 0;
-%               0 R_GPS 0 0 0 0 0;
-%               0 0 R_ay 0 0 0 0;
-%               0 0 0 R_wx 0 0 0;
-%               0 0 0 0 R_wz 0 0;
-%               0 0 0 0 0 R_delta 0;
-%               0 0 0 0 0 0 R_v];
+% Q and R matrix
+% Parameters of Q
+Q_GPS = 0.1;
+Q_Psi = 0.1;
+Q_roll = 1e-9;
+Q_rollrate = 5;
+Q_delta = 10;
+Q_v = 0.5;
+Qscale = 1;
+Q =Qscale* [Q_GPS 0 0 0 0 0 0;
+              0 Q_GPS 0 0 0 0 0;
+              0 0 Q_Psi 0 0 0 0;
+              0 0 0 Q_roll 0 0 0;
+              0 0 0 0 Q_rollrate 0 0;
+              0 0 0 0 0 Q_delta 0;
+              0 0 0 0 0 0 Q_v];
+
+% Parameters of R
+R_GPS = 1.567682871320335;
+R_ay = 0.256431376435930;
+R_wx = 3.941639024088922e-12;
+R_wz = 0.023363599865703;
+R_delta = 4.175280633723090e-04;
+R_v = 0.1;
+Rscale = 1;
+R =Rscale* [R_GPS 0 0 0 0 0 0;
+              0 R_GPS 0 0 0 0 0;
+              0 0 R_ay 0 0 0 0;
+              0 0 0 R_wx 0 0 0;
+              0 0 0 0 R_wz 0 0;
+              0 0 0 0 0 R_delta 0;
+              0 0 0 0 0 0 R_v];
 
 
 % Compute Kalman Gain
@@ -378,17 +367,6 @@ GPSXY = [data_Yi.x_estimated data_Yi.y_estimated];
 RotGPS = [cos(alp) sin(alp); -sin(alp) cos(alp)];
 GPS_estimated_cor = GPSXY*RotGPS;
 
-offset_X = 0;
-offset_Y = 0;
-offset_Psi = deg2rad(0);
-
-% ADD offset in the trajectory if needed
-traj(:,1) = traj(:,1) + offset_X;
-traj(:,2) = traj(:,2) + offset_Y;
-traj(:,3) = traj(:,3) + offset_Psi;
-GPSXY = [traj(:,1:2)];
-RotGPS = [cos(offset_Psi) sin(offset_Psi); -sin(offset_Psi) cos(offset_Psi)];
-traj(:,1:2) = GPSXY*RotGPS;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %Yixiao's measurements
@@ -771,6 +749,9 @@ end
 
 figure()
 plot(data_lab.Time,data_lab.Rollref)
+xlabel('Time (s)')
+ylabel('Rollref(rad)')
+title('Rollreference')
 
 %% Utility Functions
 

@@ -14,10 +14,6 @@ default_head = 90;
 trajectory = [0;0];
 global n;
 
-
-        filename = 'trajectory.txt';
-       %save_data(filename, x, y)
-
 % Create the main window and set its size
 figure('Name','GUI','Position', [50, 100, 500, 500]);
 

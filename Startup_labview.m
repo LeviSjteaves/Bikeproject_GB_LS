@@ -6,7 +6,6 @@ clear;
 close all;
 clc;
 
-
 %% Simulation Settings and Bike Parameters
 
 % General Parameters
@@ -23,22 +22,40 @@ clc;
 
 %% Trajectory creator
 trajectory = readtable('trajectorymat.csv');
-traj = table2array(trajectory);
+traj_or = table2array(trajectory);
 
 offset_X = 0;
 offset_Y = 0;
-offset_Psi = 0;
+offset_Psi = deg2rad(0);
 
 % ADD offset in the trajectory if needed
-traj(:,1) = traj(:,1) + offset_X;
-traj(:,2) = traj(:,2) + offset_Y;
-traj(:,3) = traj(:,3) + offset_Psi;
+traj(:,1) = traj_or(:,1) + offset_X;
+traj(:,2) = traj_or(:,2) + offset_Y;
+traj(:,3) = traj_or(:,3) + offset_Psi;
+GPSXY = traj(:,1:2)-traj(2,1:2);
+RotGPS = [cos(offset_Psi) sin(offset_Psi); -sin(offset_Psi) cos(offset_Psi)];
+traj(:,1:2) = (GPSXY*RotGPS)+traj(2,1:2);
+
+filename_trajectory = 'trajectorymat.csv'; % Specify the filename
+dlmwrite( filename_trajectory, traj, 'delimiter', ',', 'precision', 10);
+
+figure()
+plot(traj_or(2:end,1),traj_or(2:end,2))
+hold on
+plot(traj(2:end,1),traj(2:end,2))
+xlabel('X position (m)')
+ylabel('Y position (m)')
+axis equal
+grid on
+legend('Original trajectory', 'adjusted trajectory')
+title('Trajectory')
+
 
 %% Initial states
 % Initial states
-initial_X = traj(1,1);
-initial_Y = traj(1,2);
-initial_Psi = traj(1,3);
+initial_X = traj(2,1);
+initial_Y = traj(2,2);
+initial_Psi = traj(2,3);
 initial_roll = deg2rad(0);
 initial_roll_rate = deg2rad(0);
 initial_delta = deg2rad(0);
