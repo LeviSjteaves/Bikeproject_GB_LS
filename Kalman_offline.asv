@@ -30,9 +30,9 @@ clc;
 % Take into account a valid speed. 
 % Yixiao's measurements: 0-2 m/s.
 % Simulation measurements: 3 m/s
-    v=1; 
+    v=2; 
 % set the initial global coordinate system for gps coordinates
-    gps_delay = 100;
+    gps_delay = 50;
 % Choose The Bike - Options: 'red' or 'black' 
 % Yixiao uses black 
 % Simulation uses red
@@ -169,6 +169,10 @@ steer_rate(1,:) = [];
 end
 
 if select == 2
+
+reset_traj = find(data_lab.ResetTraj==1,1,'last');
+data_lab(1:reset_traj,:) = [];
+
 % Labview data
 gps_init = find(data_lab.flag>gps_delay, 1 );
 % longitude0 = data_lab.LongGPS_deg_(gps_init);
@@ -314,7 +318,7 @@ R_GPS = 1.567682871320335;
 R_ay = 0.256431376435930;
 R_wx = 3.941639024088922e-12;
 R_wz = 0.023363599865703;
-R_delta = 4.175280633723090e-04;
+R_delta = 4.175280633723090e-05;
 R_v = 0.1;
 Rscale = 1;
 R =Rscale* [R_GPS 0 0 0 0 0 0;
@@ -749,6 +753,9 @@ end
 
 figure()
 plot(data_lab.Time,data_lab.Rollref)
+xlabel('Time (s)')
+ylabel('Rollref(rad)')
+title('Rollreference')
 
 %% Utility Functions
 

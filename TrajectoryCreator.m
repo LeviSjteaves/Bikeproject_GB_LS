@@ -155,6 +155,7 @@ figure('Name','Example of segment','Position', [1050, 100, 500, 500])
         y = linspace(y_init, y_end, n);
         figure(2)
         plot(x, y,'*');
+        axis equal
         hold on;
         plot(x(1), y(1), 'o');
         hold off
@@ -167,14 +168,15 @@ figure('Name','Example of segment','Position', [1050, 100, 500, 500])
         x_init = str2double(get(startcurve_x, 'String'));
         y_init = str2double(get(startcurve_y, 'String'));
         radius = -str2double(get(edit_radiuscurve, 'String'));
-        heading_s = deg2rad(str2double(get(heading_start, 'String')))-(0.5*pi);
-        heading_e = deg2rad(str2double(get(heading_end, 'String')))-(0.5*pi);
+        heading_s = deg2rad(str2double(get(heading_start, 'String')));
+        heading_e = deg2rad(str2double(get(heading_end, 'String')));
         theta = linspace(0, (heading_s-heading_e), n);
-        x = radius*cos(theta+heading_s) +  x_init - radius;
-        y = radius*sin(theta+heading_s) +  y_init + radius;
+        x = -radius*cos(theta-heading_s+(0.5*pi)) +  x_init - radius*sin(heading_s);
+        y = radius*sin(theta-heading_s+(0.5*pi))  +  y_init - radius*cos(heading_s);
         figure(2)
         plot(x, y,'*');
         hold on;
+        axis equal
         plot(x(1), y(1), 'o');
         hold off
         title('curve');
@@ -188,8 +190,8 @@ figure('Name','Example of segment','Position', [1050, 100, 500, 500])
         x_init = str2double(get(startcir_x, 'String'));
         y_init = str2double(get(startcir_y, 'String'));
         theta = linspace(0, 2*pi, n);
-        x = radius*cos(theta+heading) +  x_init - radius;
-        y = radius*sin(theta+heading) +  y_init;
+        x = radius*cos(theta+heading) +  x_init;
+        y = radius*sin(theta+heading) +  y_init + radius;
         figure(2)
         plot(x, y,'*');
         hold on;
@@ -224,7 +226,7 @@ figure('Name','Example of segment','Position', [1050, 100, 500, 500])
         x_init = str2double(get(startsin_x, 'String'));
         y_init = str2double(get(startsin_y, 'String'));
         x = linspace(0, (2*pi*rep)/freq, n)+x_init;
-        y = amplitude*sin(freq*x-x_init)+y_init;
+        y = amplitude*sin(freq*(x-x_init))+y_init;
         figure(2)
         plot(x, y,'*');
         hold on;
@@ -242,7 +244,7 @@ figure('Name','Example of segment','Position', [1050, 100, 500, 500])
         x_init = str2double(get(startbum_x, 'String'));
         y_init = str2double(get(startbum_y, 'String'));
         x = linspace(0, (2*pi*rep)/freq, n)+x_init;
-        y = amplitude*cos(freq*(x-x_init))+y_init-amplitude;
+        y = 0.5*amplitude*cos(freq*(x-x_init))+y_init-amplitude*0.5;
         figure(2)
         plot(x, y,'*');
         hold on;
@@ -252,10 +254,6 @@ figure('Name','Example of segment','Position', [1050, 100, 500, 500])
         data = [x; y];
     end
 
-%     function save_button(~, ~)
-%         filename = 'trajectory.txt';
-%         save_data(filename, x, y)
-%     end
 
 % Define a function to save the x and y data to a file
     function save_data(~, ~)
@@ -268,16 +266,13 @@ figure('Name','Example of segment','Position', [1050, 100, 500, 500])
         hold on
         
         trajectory = [trajectory(1,:) x; trajectory(2,:) y];
-        psiref = atan2(trajectory(2,2:n)-trajectory(2,1:n-1),trajectory(1,2:n)-trajectory(1,1:n-1));
 
-        trajectory = [trajectory(1,:); trajectory(2,:); psiref(1) psiref(1) psiref]';
-        trajectory(1,:) = [];
+        trajectory_final = [trajectory(1,:); trajectory(2,:)]';
+        trajectory_final(1,:) = trajectory_final(2,:);
 
         filename_trajectory = 'trajectorymat.csv'; % Specify the filename
-        dlmwrite( filename_trajectory, trajectory, 'delimiter', ',', 'precision', 10);
+        dlmwrite( filename_trajectory, trajectory_final, 'delimiter', ',', 'precision', 10);
 
-
-        dlmwrite(filename, trajectory', 'delimiter', '\t');
         set(startline_x,'String',x(end));
         set(startline_y,'String',y(end));
         set(startcurve_x,'String',x(end));

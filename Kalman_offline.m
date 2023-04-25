@@ -30,7 +30,7 @@ clc;
 % Take into account a valid speed. 
 % Yixiao's measurements: 0-2 m/s.
 % Simulation measurements: 3 m/s
-    v=1; 
+    v=2; 
 % set the initial global coordinate system for gps coordinates
     gps_delay = 50;
 % Choose The Bike - Options: 'red' or 'black' 
@@ -99,39 +99,12 @@ data_sim_states = readtable('bikedata_simulation_bikestates.csv');
 % BikeData from labview
 data_lab = readtable('data.csv');
 
-%% Initial states
+%% Load trajectory
 
 Table_traj = readtable('trajectorymat.csv');
 Table_traj(1,:) = [];
 
-if select == 1
-% Initial Roll
-        initial_state.roll = deg2rad(0);
-        initial_state.roll_rate = deg2rad(0);
-% Initial Steering
-        initial_state.steering = deg2rad(0);
-% Initial Pose (X,Y,theta)
-        initial_state.x = data_sim_states.X(1);
-        initial_state.y = data_sim_states.Y(1);
-        initial_state.heading = deg2rad(data_sim_states.Psi(1));
-        initial_pose = [initial_state.x; initial_state.y; initial_state.heading];
-        initial_state_estimate = initial_state;
-else
-% Initial Roll
-        initial_state.roll = deg2rad(0);
-        initial_state.roll_rate = deg2rad(0);
-% Initial Steering
-        initial_state.steering = deg2rad(0);
-% Initial Pose (X,Y,theta)
-        initial_state.x = Table_traj.Var1(1);
-        initial_state.y = Table_traj.Var2(1);
-        initial_state.heading = Table_traj.Var3(1);
-        initial_pose = [initial_state.x; initial_state.y; initial_state.heading];
-        initial_state_estimate = initial_state;
-end
-
-
-%% Select right measurements and input
+%% Select right measurements and input AND initialize
 % Converting GPS data to X and Y position
 % Setting X and Y to zero at first long/lat datapoint
 if select == 0
@@ -156,6 +129,18 @@ measurements = [data_Yi.Time ay omega_x omega_y delta_enc v_enc];
 measurements(1,:) = [];
 steer_rate = [data_Yi.Time data_Yi.SteeringAngle];
 steer_rate(1,:) = [];
+
+% Initial Roll
+        initial_state.roll = deg2rad(0);
+        initial_state.roll_rate = deg2rad(0);
+% Initial Steering
+        initial_state.steering = deg2rad(0);
+% Initial Pose (X,Y,theta)
+        initial_state.x = Table_traj.Var1(1);
+        initial_state.y = Table_traj.Var2(1);
+        initial_state.heading = Table_traj.Var3(1);
+        initial_pose = [initial_state.x; initial_state.y; initial_state.heading];
+        initial_state_estimate = initial_state;
 end 
 
 if select == 1
@@ -166,9 +151,26 @@ measurements = [data_sim.Time data_sim.a_y data_sim.w_x data_sim.w_z data_sim.De
 measurements(1,:) = [];
 steer_rate = [data_sim.Time data_sim.Steerrate];
 steer_rate(1,:) = [];
+
+% Initial Roll
+        initial_state.roll = deg2rad(0);
+        initial_state.roll_rate = deg2rad(0);
+% Initial Steering
+        initial_state.steering = deg2rad(0);
+% Initial Pose (X,Y,theta)
+        initial_state.x = data_sim_states.X(1);
+        initial_state.y = data_sim_states.Y(1);
+        initial_state.heading = deg2rad(data_sim_states.Psi(1));
+        initial_pose = [initial_state.x; initial_state.y; initial_state.heading];
+        initial_state_estimate = initial_state;
+
 end
 
 if select == 2
+
+reset_traj = find(data_lab.ResetTraj==1,1,'last');
+data_lab(1:reset_traj,:) = [];
+
 % Labview data
 gps_init = find(data_lab.flag>gps_delay, 1 );
 % longitude0 = data_lab.LongGPS_deg_(gps_init);
@@ -196,6 +198,21 @@ measurements(1,:) = [];
 steer_rate = [data_lab.Time data_lab.SteerrateInput_rad_s_];
 steer_rate(1,:) = [];
 gpsflag = [data_lab.Time data_lab.flag];
+
+Table_traj.Var1 = Table_traj.Var1+X(1);
+Table_traj.Var2 = Table_traj.Var2+Y(1);
+
+% Initial Roll
+        initial_state.roll = deg2rad(0);
+        initial_state.roll_rate = deg2rad(0);
+% Initial Steering
+        initial_state.steering = deg2rad(0);
+% Initial Pose (X,Y,theta)
+        initial_state.x = Table_traj.Var1(1);
+        initial_state.y = Table_traj.Var2(1);
+        initial_state.heading = Table_traj.Var3(1);
+        initial_pose = [initial_state.x; initial_state.y; initial_state.heading];
+        initial_state_estimate = initial_state;
 end
 
 
@@ -314,7 +331,7 @@ R_GPS = 1.567682871320335;
 R_ay = 0.256431376435930;
 R_wx = 3.941639024088922e-12;
 R_wz = 0.023363599865703;
-R_delta = 4.175280633723090e-04;
+R_delta = 4.175280633723090e-05;
 R_v = 0.1;
 Rscale = 1;
 R =Rscale* [R_GPS 0 0 0 0 0 0;

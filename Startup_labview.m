@@ -14,21 +14,27 @@ clc;
 % Sampling Time
         Ts = 0.01; 
 % Constant Speed [m/s]
-        v = 3;    
+        v = 1.5;    
 % Choose The Bike - Options: 'red' or 'black'
     bike = 'red';
 % Load the parameters of the specified bicycle
     bike_params = LoadBikeParameters(bike); 
 
 %% Trajectory creator
-trajectory = readtable('trajectorymat.csv');
-traj_or = table2array(trajectory);
-
 offset_X = 0;
 offset_Y = 0;
-offset_Psi = deg2rad(0);
+offset_Psi = deg2rad(-5.5); 
+
+trajectory = readtable('trajectorymat.csv');
+traj_or = table2array(trajectory);
+traj_or = traj_or';
 
 % ADD offset in the trajectory if needed
+n = length(traj_or(1,:));
+
+psiref = atan2(traj_or(2,2:n)-traj_or(2,1:n-1),traj_or(1,2:n)-traj_or(1,1:n-1));
+traj_or = [traj_or(1,:); traj_or(2,:); psiref(1) psiref]';
+
 traj(:,1) = traj_or(:,1) + offset_X;
 traj(:,2) = traj_or(:,2) + offset_Y;
 traj(:,3) = traj_or(:,3) + offset_Psi;
@@ -50,7 +56,12 @@ grid on
 legend('Original trajectory', 'adjusted trajectory')
 title('Trajectory')
 
+x1=deg2rad(11.998123)*6371000.0;
+y1=deg2rad(57.670587)*6371000.0;
+x2=deg2rad(11.999180)*6371000.0;
+y2=deg2rad(57.670498)*6371000.0;
 
+startend = [x1 y1 x2 y2];
 %% Initial states
 % Initial states
 initial_X = traj(2,1);
@@ -174,7 +185,8 @@ R_GPS = 1.567682871320335;
 R_ay = 0.256431376435930;
 R_wx = 3.941639024088922e-12;
 R_wz = 0.023363599865703;
-R_delta = 4.175280633723090e-04;
+% R_delta = 4.175280633723090e-04;
+R_delta = 4.175280633723090e-05;
 R_v = 0.1;
 Rscale = 1;
 R =Rscale* [R_GPS 0 0 0 0 0 0;
@@ -210,7 +222,7 @@ Kalman_gain2 = Kalman_gain1(4:7,3:7);
 matrixmat = [A_d; B_d'; C1; D1';Kalman_gain1;initial_states];
 
 filename_matrix = 'matrixmat.csv'; % Specify the filename
-csvwrite(filename_matrix, matrixmat); % Write the matrix to the CSV file
+dlmwrite(filename_matrix, matrixmat, 'delimiter', ',', 'precision', 10);
 
 %% Utility Functions
 

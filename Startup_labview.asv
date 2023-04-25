@@ -26,15 +26,20 @@ traj_or = table2array(trajectory);
 
 offset_X = 0;
 offset_Y = 0;
-offset_Psi = deg2rad(-3);
+offset_Psi = deg2rad(0);
 
 % ADD offset in the trajectory if needed
+n = length(traj_or(:,1))-1;
+
+psiref = atan2(trajectory(2,2:n)-trajectory(2,1:n-1),trajectory(1,2:n)-trajectory(1,1:n-1));
+traj_or = [trajectory(1,:); trajectory(2,:); psiref(1) psiref(1) psiref]';
+
 traj(:,1) = traj_or(:,1) + offset_X;
 traj(:,2) = traj_or(:,2) + offset_Y;
 traj(:,3) = traj_or(:,3) + offset_Psi;
-GPSXY = [traj(:,1:2)];
+GPSXY = traj(:,1:2)-traj(2,1:2);
 RotGPS = [cos(offset_Psi) sin(offset_Psi); -sin(offset_Psi) cos(offset_Psi)];
-traj(:,1:2) = GPSXY*RotGPS;
+traj(:,1:2) = (GPSXY*RotGPS)+traj(2,1:2);
 
 filename_trajectory = 'trajectorymat.csv'; % Specify the filename
 dlmwrite( filename_trajectory, traj, 'delimiter', ',', 'precision', 10);
@@ -50,12 +55,17 @@ grid on
 legend('Original trajectory', 'adjusted trajectory')
 title('Trajectory')
 
+x1=deg2rad(11.998123)*6371000.0;
+y1=deg2rad(57.670587)*6371000.0;
+x2=deg2rad(11.999180)*6371000.0;
+y2=deg2rad(57.670498)*6371000.0;
 
+startend = [x1 y1 x2 y2];
 %% Initial states
 % Initial states
-initial_X = traj(1,1);
-initial_Y = traj(1,2);
-initial_Psi = traj(1,3);
+initial_X = traj(2,1);
+initial_Y = traj(2,2);
+initial_Psi = traj(2,3);
 initial_roll = deg2rad(0);
 initial_roll_rate = deg2rad(0);
 initial_delta = deg2rad(0);
@@ -210,7 +220,7 @@ Kalman_gain2 = Kalman_gain1(4:7,3:7);
 matrixmat = [A_d; B_d'; C1; D1';Kalman_gain1;initial_states];
 
 filename_matrix = 'matrixmat.csv'; % Specify the filename
-csvwrite(filename_matrix, matrixmat); % Write the matrix to the CSV file
+dlmwrite(filename_matrix, matrixmat, 'delimiter', ',', 'precision', 10);
 
 %% Utility Functions
 

@@ -1,8 +1,4 @@
-<<<<<<< Updated upstream
-function  [trajectory]=TrajectoryCreator()
-=======
-function  test_trajectory()
->>>>>>> Stashed changes
+function  TrajectoryCreator()
 % Create a GUI with buttons to plot different shapes, set their initial positions,
 % and save their data
 clc;
@@ -16,14 +12,7 @@ default_x = 0;
 default_y = 0;
 default_head = 90;
 trajectory = [0;0];
-<<<<<<< Updated upstream
-=======
 global n;
->>>>>>> Stashed changes
-
-
-        filename = 'trajectory.txt';
-       %save_data(filename, x, y)
 
 % Create the main window and set its size
 figure('Name','GUI','Position', [50, 100, 500, 500]);
@@ -166,6 +155,7 @@ figure('Name','Example of segment','Position', [1050, 100, 500, 500])
         y = linspace(y_init, y_end, n);
         figure(2)
         plot(x, y,'*');
+        axis equal
         hold on;
         plot(x(1), y(1), 'o');
         hold off
@@ -181,7 +171,7 @@ figure('Name','Example of segment','Position', [1050, 100, 500, 500])
         heading_s = deg2rad(str2double(get(heading_start, 'String')))-(0.5*pi);
         heading_e = deg2rad(str2double(get(heading_end, 'String')))-(0.5*pi);
         theta = linspace(0, (heading_s-heading_e), n);
-        x = radius*cos(theta+heading_s) +  x_init - radius;
+        x = radius*cos(theta+heading_s) +  x_init;
         y = radius*sin(theta+heading_s) +  y_init + radius;
         figure(2)
         plot(x, y,'*');
@@ -279,17 +269,13 @@ figure('Name','Example of segment','Position', [1050, 100, 500, 500])
         hold on
         
         trajectory = [trajectory(1,:) x; trajectory(2,:) y];
-<<<<<<< Updated upstream
-=======
-        psiref = atan2(trajectory(2,2:n)-trajectory(2,1:n-1),trajectory(1,2:n)-trajectory(1,1:n-1));
 
-        trajectory = [trajectory(1,:); trajectory(2,:); psiref(1) psiref];
+        trajectory_final = [trajectory(1,:); trajectory(2,:)]';
+        trajectory_final(1,:) = trajectory_final(2,:);
 
         filename_trajectory = 'trajectorymat.csv'; % Specify the filename
-        csvwrite(filename_trajectory, trajectory); % Write the matrix to the CSV file
->>>>>>> Stashed changes
-        
-        dlmwrite(filename, trajectory', 'delimiter', '\t');
+        dlmwrite( filename_trajectory, trajectory_final, 'delimiter', ',', 'precision', 10);
+
         set(startline_x,'String',x(end));
         set(startline_y,'String',y(end));
         set(startcurve_x,'String',x(end));
