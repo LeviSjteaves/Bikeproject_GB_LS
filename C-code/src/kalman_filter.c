@@ -33,6 +33,7 @@ static void useLastValueIfNaN(double *value, double *lastValue)
  * @param[out] matrix Parsed matrix
  *
  * @author Gaizka Barrasa
+ * @author Levi Stevens
  */
 extern void transform_mat(double *input, double (*matrix)[7])
 {

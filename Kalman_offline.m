@@ -572,39 +572,39 @@ grid on
 legend('offline Kalman estimation', 'True state','GPS measurements')
 
 subplot(425)
-plot(Results.sim_Kalman.Time, Results.sim_Kalman.Data(:,3))
+plot(Results.sim_Kalman.Time, rad2deg(Results.sim_Kalman.Data(:,3)))
 hold on
-plot(data_sim_states.Time, data_sim_states.Psi)
+plot(data_sim_states.Time, rad2deg(data_sim_states.Psi))
 xlabel('Time (s)')
-ylabel('heading (rad)')
+ylabel('heading (deg)')
 grid on
 legend('offline Kalman estimation', 'True state')
 
 subplot(422)
-plot(Results.sim_Kalman.Time, Results.sim_Kalman.Data(:,4))
+plot(Results.sim_Kalman.Time, rad2deg(Results.sim_Kalman.Data(:,4)))
 hold on
-plot(data_sim_states.Time, data_sim_states.Roll)
+plot(data_sim_states.Time, rad2deg(data_sim_states.Roll))
 xlabel('Time (s)')
-ylabel('Roll (rad)')
+ylabel('Roll (deg)')
 grid on
 legend('offline Kalman estimation', 'True state')
 title('Comparison with simulation measurement data')
 
 subplot(424)
-plot(Results.sim_Kalman.Time, Results.sim_Kalman.Data(:,5))
+plot(Results.sim_Kalman.Time, rad2deg(Results.sim_Kalman.Data(:,5)))
 hold on
-plot(data_sim_states.Time, data_sim_states.Rollrate)
+plot(data_sim_states.Time, rad2deg(data_sim_states.Rollrate))
 xlabel('Time (s)')
-ylabel('Roll Rate (rad/s)')
+ylabel('Roll Rate (deg/s)')
 grid on
 legend('offline Kalman estimation', 'True state')
 
 subplot(426)
-plot(Results.sim_Kalman.Time, Results.sim_Kalman.Data(:,6))
+plot(Results.sim_Kalman.Time, rad2deg(Results.sim_Kalman.Data(:,6)))
 hold on
-plot(data_sim_states.Time, data_sim_states.Delta)
+plot(data_sim_states.Time, rad2deg(data_sim_states.Delta))
 xlabel('Time (s)')
-ylabel('Steering Angle (rad)')
+ylabel('Steering Angle (deg)')
 grid on
 legend('offline Kalman estimation', 'True state')
 
@@ -623,11 +623,11 @@ end
 %labview data
 if select == 2
 fig = figure();
-plot(Results2.sim_Kalman.Data(:,1), Results2.sim_Kalman.Data(:,2))
+plot(Results2.sim_Kalman.Data(:,1)-measurementsGPS(1,2), Results2.sim_Kalman.Data(:,2)-measurementsGPS(1,3))
 hold on
-plot(data_lab.StateEstimateX_m_ ,data_lab.StateEstimateY_m_)
-plot(measurementsGPS(:,2),measurementsGPS(:,3))
-plot(Table_traj.Var1,Table_traj.Var2)
+plot(data_lab.StateEstimateX_m_ -measurementsGPS(1,2),data_lab.StateEstimateY_m_-measurementsGPS(1,3))
+plot(measurementsGPS(:,2)-measurementsGPS(1,2),measurementsGPS(:,3)-measurementsGPS(1,3))
+plot(Table_traj.Var1-measurementsGPS(1,2),Table_traj.Var2-measurementsGPS(1,3))
 xlabel('X position (m)')
 ylabel('Y position (m)')
 axis equal
@@ -637,10 +637,10 @@ title('Comparison with Kalman estimator on bike')
 
 fig = figure();
 subplot(421)
-plot(Results2.sim_Kalman.Time,Results2.sim_Kalman.Data(:,1))
+plot(Results2.sim_Kalman.Time,Results2.sim_Kalman.Data(:,1)-measurementsGPS(1,2))
 hold on
-plot(data_lab.Time, data_lab.StateEstimateX_m_)
-plot(measurementsGPS(:,1),measurementsGPS(:,2))
+plot(data_lab.Time, data_lab.StateEstimateX_m_-measurementsGPS(1,2))
+plot(measurementsGPS(:,1),measurementsGPS(:,2)-measurementsGPS(1,2))
 xlabel('Time (s)')
 ylabel('X position (m)')
 % ylim([-10 20])
@@ -650,10 +650,10 @@ legend('offline Kalman estimation Tuned R', 'Online estimation','GPS measurement
 title('Comparison with Kalman estimator on bike')
 
 subplot(423)
-plot(Results2.sim_Kalman.Time, Results2.sim_Kalman.Data(:,2))
+plot(Results2.sim_Kalman.Time, Results2.sim_Kalman.Data(:,2)-measurementsGPS(1,3))
 hold on
-plot(data_lab.Time, data_lab.StateEstimateY_m_)
-plot(measurementsGPS(:,1),measurementsGPS(:,3))
+plot(data_lab.Time, data_lab.StateEstimateY_m_-measurementsGPS(1,3))
+plot(measurementsGPS(:,1),measurementsGPS(:,3)-measurementsGPS(1,3))
 xlabel('Time (s)')
 ylabel('Y position (m)')
 % ylim([-10 60])
@@ -662,42 +662,42 @@ grid on
 legend('offline Kalman estimation Tuned R', 'Online estimation','GPS measurements')
 
 subplot(425)
-plot(Results2.sim_Kalman.Time, Results2.sim_Kalman.Data(:,3))
+plot(Results2.sim_Kalman.Time, rad2deg(Results2.sim_Kalman.Data(:,3)))
 hold on
-plot(data_lab.Time, wrapToPi(data_lab.StateEstimatePsi_rad_))
+plot(data_lab.Time, rad2deg(wrapToPi(data_lab.StateEstimatePsi_rad_)))
 xlabel('Time (s)')
-ylabel('heading (rad)')
+ylabel('heading (deg)')
 grid on
 legend('offline Kalman estimation Tuned R', 'Online estimation')
 
 subplot(422)
-plot(Results2.sim_Kalman.Time, Results2.sim_Kalman.Data(:,4))
+plot(Results2.sim_Kalman.Time, rad2deg(Results2.sim_Kalman.Data(:,4)))
 hold on
-plot(data_lab.Time,data_lab.StateEstimateRoll_rad_)
-plot(Results2.integration_rollrate.Time, Results2.integration_rollrate.Data)
+plot(data_lab.Time,rad2deg(data_lab.StateEstimateRoll_rad_))
+plot(Results2.integration_rollrate.Time, rad2deg(Results2.integration_rollrate.Data))
 xlabel('Time (s)')
-ylabel('Roll (rad)')
+ylabel('Roll (deg)')
 grid on
 legend('offline Kalman estimation Tuned R', 'Online estimation','Integration Rollrate')
 title('Comparison with Kalman estimator on bike')
 
 subplot(424)
-plot(Results2.sim_Kalman.Time, Results2.sim_Kalman.Data(:,5))
+plot(Results2.sim_Kalman.Time, rad2deg(Results2.sim_Kalman.Data(:,5)))
 hold on
-plot(data_lab.Time, data_lab.StateEstimateRollrate_rad_s_)
-plot(data_lab.Time, data_lab.GyroscopeX_rad_s_)
+plot(data_lab.Time, rad2deg(data_lab.StateEstimateRollrate_rad_s_))
+plot(data_lab.Time, rad2deg(data_lab.GyroscopeX_rad_s_))
 xlabel('Time (s)')
-ylabel('Roll Rate (rad/s)')
+ylabel('Roll Rate (deg/s)')
 grid on
 legend('offline Kalman estimation Tuned R', 'Online estimation', 'Measurement')
 
 subplot(426)
-plot(Results2.sim_Kalman.Time,Results2.sim_Kalman.Data(:,6))
+plot(Results2.sim_Kalman.Time,rad2deg(Results2.sim_Kalman.Data(:,6)))
 hold on
-plot(data_lab.Time,data_lab.StateEstimateDelta_rad_)
-plot(data_lab.Time,data_lab.SteeringAngleEncoder_rad_)
+plot(data_lab.Time,rad2deg(data_lab.StateEstimateDelta_rad_))
+plot(data_lab.Time,rad2deg(data_lab.SteeringAngleEncoder_rad_))
 xlabel('Time (s)')
-ylabel('Steering Angle (rad)')
+ylabel('Steering Angle (deg)')
 grid on
 legend('offline Kalman estimation Tuned R', 'Online estimation', 'Measurement')
 
@@ -713,10 +713,10 @@ grid on
 legend('error1','error2')
 
 subplot(428)
-plot(Results2.sim_Kalman.Time, Results2.sim_Kalman.Data(:,7))
+plot(Results2.sim_Kalman.Time, Results2.sim_Kalman.Data(:,7)*bike_params.r_wheel)
 hold on
 plot(data_lab.Time, data_lab.StateEstimateVelocity_m_s_)
-plot(data_lab.Time,data_lab.SpeedGPS_m_s_)
+plot(data_lab.Time,data_lab.SpeedGPS_m_s_*bike_params.r_wheel)
 xlabel('Time (s)')
 ylabel('velocity (m/s)')
 grid on
@@ -734,40 +734,40 @@ grid on
 legend('prediction','meas')
 
 subplot(222)
-plot(Results2.y_hat.Time,Results2.y_hat.Data(:,2))
+plot(Results2.y_hat.Time,rad2deg(Results2.y_hat.Data(:,2)))
 hold on
-plot(measurements(:,1),measurements(:,3))
+plot(measurements(:,1),rad2deg(measurements(:,3)))
 xlabel('Time (s)')
-ylabel(' (rad/s)')
+ylabel(' (deg/s)')
 title('w_x')
 grid on
 legend('prediction','meas')
 
 subplot(223)
-plot(Results2.y_hat.Time,Results2.y_hat.Data(:,3))
+plot(Results2.y_hat.Time,rad2deg(Results2.y_hat.Data(:,3)))
 hold on
-plot(measurements(:,1),measurements(:,4))
+plot(measurements(:,1),rad2deg(measurements(:,4)))
 xlabel('Time (s)')
-ylabel(' (rad/s)')
+ylabel(' (deg/s)')
 title('w_z')
 grid on
 legend('prediction','meas')
 
 subplot(224)
-plot(Results2.y_hat.Time,Results2.y_hat.Data(:,4))
+plot(Results2.y_hat.Time,Results2.y_hat.Data(:,4)*bike_params.r_wheel)
 hold on
-plot(measurements(:,1),measurements(:,6))
+plot(measurements(:,1),measurements(:,6)*bike_params.r_wheel)
 xlabel('Time (s)')
-ylabel(' (rad)')
+ylabel(' (m/s)')
 title('velocity')
 grid on
 legend('prediction','meas')
 end
 
 figure()
-plot(data_lab.Time,data_lab.Rollref)
+plot(data_lab.Time,rad2deg(data_lab.Rollref))
 xlabel('Time (s)')
-ylabel('Rollref(rad)')
+ylabel('Rollref(deg)')
 title('Rollreference')
 
 %% Utility Functions
