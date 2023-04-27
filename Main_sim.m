@@ -24,7 +24,7 @@ clc;
     % Horizon distance [m]
         hor_dis = 10;
     % Constant Speed [m/s]
-        v = 3;    
+        v = 2;    
 
 % Open the Simulink Model
     open([model '.slx']);
@@ -57,11 +57,11 @@ clc;
 % SHAPE options: sharp_turn, line, infinite, circle, ascent_sin, smooth_curve
 type = 'circle';
 % Distance between points
-ref_dis = 1;
+ref_dis = 0.1;
 % Number# of reference points
-N = 1000; 
+N = 100; 
 % Scale (only for infinite and circle)
-scale = 50; 
+scale = 30; 
 
 [Xref,Yref,Psiref] = ReferenceGenerator(type,ref_dis,N,scale);
 test_curve=[Xref,Yref,Psiref];
@@ -82,7 +82,7 @@ Output_reference_test = referenceTest(test_curve,hor_dis,Ts,initial_pose,v, ref_
 
 %update initial states if offset is detected
 initial_state.x = Output_reference_test(1);
-initial_state.y = Output_reference_test(2);
+initial_state.y = Output_reference_test(2)+1;
 initial_state.heading = Output_reference_test(3);
 initial_pose = [initial_state.x; initial_state.y; initial_state.heading];
 initial_state_estimate = initial_state;
@@ -173,7 +173,7 @@ B_con=[lr*v/(lr+lf);v/(lr+lf)];
  Q=kk*[1000 0;0 100];
  R=0.5;
  [K,S,e] = lqr(A_con,B_con,Q,R);
- k1=K(1);
+ k1=K(1)*2;
  k2=K(2);
 
 e2_max=deg2rad(30);%Here is the e2_max we used to calculate e1_max

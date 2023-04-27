@@ -23,7 +23,7 @@ clc;
 %% Trajectory creator
 offset_X = 0;
 offset_Y = 0;
-offset_Psi = deg2rad(-5.5); 
+offset_Psi = deg2rad(0); 
 
 trajectory = readtable('trajectorymat.csv');
 traj_or = table2array(trajectory);

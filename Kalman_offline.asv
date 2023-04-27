@@ -26,7 +26,7 @@ clc;
 %     sim_time = 50;
 % 0 for Yixiao's measurement data, 1 for measurement data which is recorded during a simulation (infinity shape)
 % 2 for measurement data 'data' from labview
-    select = 2;
+    select = 0;
 % Take into account a valid speed. 
 % Yixiao's measurements: 0-2 m/s.
 % Simulation measurements: 3 m/s
