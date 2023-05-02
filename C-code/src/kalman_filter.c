@@ -74,6 +74,8 @@ extern void transform_latlog_to_XY_l(double longitude, double latitude, double *
     //     initializedLatLon = true;
     // }
 
+    // latitude0 = 60 * M_PI /180;
+    // longitude0 = 10* M_PI /180;
     latitude0 = 0;
     longitude0 = 0;
     initializedLatLon = true;
