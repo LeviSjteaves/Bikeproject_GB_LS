@@ -130,14 +130,14 @@ grid on
 title('Steer angle')
 
 figure()
-y = fft(Results.ref_states.Data(:,5));
-fs = 1/Ts;
-n = length(Results.ref_states.Data(:,5));
-fshift = (-n/2:n/2-1)*(fs/n);
-yshift = fftshift(y);
-plot(fshift,abs(yshift))
-xlabel('Frequency (Hz)')
-ylabel('Magnitude')
-
+hold on;
+plot(Results.delta_e1.Time(:,1),rad2deg(Results.delta_e1.Data(:,1)));
+plot(Results.delta_e2.Time(:,1),rad2deg(Results.delta_e2.Data(:,1)));
+plot(Results.delta_ref.Time(:,1),rad2deg(Results.delta_ref.Data(:,1)));
+xlabel('Time [t]')
+ylabel('Angle [Deg]')
+legend('delta_e1','delta_e2', 'Delta_reference')
+grid on
+title('Steer angle')
 
 end

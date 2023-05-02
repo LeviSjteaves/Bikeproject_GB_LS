@@ -14,22 +14,47 @@ clc;
 % Sampling Time
         Ts = 0.01; 
 % Constant Speed [m/s]
-        v = 1.5;    
+        v = 2;    
 % Choose The Bike - Options: 'red' or 'black'
     bike = 'red';
 % Load the parameters of the specified bicycle
     bike_params = LoadBikeParameters(bike); 
+% Trajectory Record : 1=using measurment data GPS as trajectory
+TrajectoryRecord = 1;
 
-%% Trajectory creator
+% Trajectory offset
 offset_X = 0;
 offset_Y = 0;
 offset_Psi = deg2rad(0); 
 
+%% Trajectory creator
+% recorded trajectory
+
+if TrajectoryRecord == 1
+data_lab = readtable('data.csv');
+longitude0 = deg2rad(0);
+latitude0 = deg2rad(0);
+Earth_rad = 6371000.0;
+X = Earth_rad * (data_lab.LongGPS_deg_ - longitude0) * cos(latitude0);
+Y = Earth_rad * (data_lab.LatGPS_deg_ - latitude0);
+
+XY = unique([X Y],'rows');
+n = length(XY);
+
+psiref = atan2(XY(2:n,2)-XY(1:n-1,2),XY(2:n,1)-XY(1:n-1,1));
+traj_or_rec = [XY [psiref(1);psiref]];
+traj_or_rec(1,:) = []; 
+
+filename_trajectory = 'trajectorymat.csv';
+dlmwrite( filename_trajectory, traj_or_rec, 'delimiter', ',', 'precision', 10);
+
+end
+
+% Apply offset trajectory
 trajectory = readtable('trajectorymat.csv');
 traj_or = table2array(trajectory);
 traj_or = traj_or';
 
-% ADD offset in the trajectory if needed
 n = length(traj_or(1,:));
 
 psiref = atan2(traj_or(2,2:n)-traj_or(2,1:n-1),traj_or(1,2:n)-traj_or(1,1:n-1));
@@ -89,12 +114,12 @@ r_wheel = bike_params.r_wheel;
 %% Balancing Controller
 
 % Outer loop -- Roll Tracking
-P_balancing_outer = 1.3;
+P_balancing_outer = 1.75;
 I_balancing_outer = 0.0;
 D_balancing_outer = 0.0;
 
 % Inner loop -- Balancing
-P_balancing_inner = 3;
+P_balancing_inner = 1;
 I_balancing_inner = 0;
 D_balancing_inner = 0;  
 
@@ -185,7 +210,6 @@ R_GPS = 1.567682871320335;
 R_ay = 0.256431376435930;
 R_wx = 3.941639024088922e-12;
 R_wz = 0.023363599865703;
-% R_delta = 4.175280633723090e-04;
 R_delta = 4.175280633723090e-05;
 R_v = 0.1;
 Rscale = 1;

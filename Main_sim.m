@@ -14,7 +14,7 @@ clc;
     % Name of the model
         model = 'Main_bikesim';
     % Simulation time
-        sim_time = 200;
+        sim_time = 100;
 
     % Sampling Time
         Ts = 0.01; 
@@ -57,11 +57,11 @@ clc;
 % SHAPE options: sharp_turn, line, infinite, circle, ascent_sin, smooth_curve
 type = 'circle';
 % Distance between points
-ref_dis = 0.1;
+ref_dis = 1;
 % Number# of reference points
 N = 100; 
 % Scale (only for infinite and circle)
-scale = 30; 
+scale = 10; 
 
 [Xref,Yref,Psiref] = ReferenceGenerator(type,ref_dis,N,scale);
 test_curve=[Xref,Yref,Psiref];
@@ -176,8 +176,11 @@ B_con=[lr*v/(lr+lf);v/(lr+lf)];
  k1=K(1)*2;
  k2=K(2);
 
-e2_max=deg2rad(30);%Here is the e2_max we used to calculate e1_max
-e1_max=abs(-k2*e2_max/k1);% k1,k2 has been known, so we can calculate e1_max
+% e2_max=deg2rad(30);%Here is the e2_max we used to calculate e1_max
+% e1_max=abs(-k2*e2_max/k1);% k1,k2 has been known, so we can calculate e1_max
+
+e2_max=deg2rad(30);
+e1_max=abs(1000);
 
 %% Transfer function for heading in wrap traj
 
@@ -322,6 +325,7 @@ writetable(bikedata_simulation,filename_simulation);
 %name of the plot
 Tnumber = 'No test case: General simulation run';
         Plot_bikesimulation_results(Tnumber, Ts, test_curve, Results);
+
 end
 
 %% Test cases for validation

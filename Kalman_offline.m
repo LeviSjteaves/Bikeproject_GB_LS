@@ -32,7 +32,7 @@ clc;
 % Simulation measurements: 3 m/s
     v=2; 
 % set the initial global coordinate system for gps coordinates
-    gps_delay = 50;
+    gps_delay = 5;
 % Choose The Bike - Options: 'red' or 'black' 
 % Yixiao uses black 
 % Simulation uses red
@@ -173,10 +173,8 @@ data_lab(1:reset_traj,:) = [];
 
 % Labview data
 gps_init = find(data_lab.flag>gps_delay, 1 );
-% longitude0 = data_lab.LongGPS_deg_(gps_init);
-% latitude0 = data_lab.LatGPS_deg_(gps_init);
-longitude0 = 0;
-latitude0 = 0;
+longitude0 = deg2rad(0);
+latitude0 = deg2rad(0);
 Earth_rad = 6371000.0;
 
 X = Earth_rad * (data_lab.LongGPS_deg_ - longitude0) * cos(latitude0);
@@ -188,7 +186,7 @@ ay = -data_lab.AccelerometerY_rad_s_2_;
 omega_x = data_lab.GyroscopeX_rad_s_;
 omega_y = data_lab.GyroscopeZ_rad_s_;
 delta_enc = data_lab.SteeringAngleEncoder_rad_;
-v_enc = data_lab.SpeedGPS_m_s_;
+v_enc = data_lab.SpeedVESC_rad_s_;
 
 % Prepare measurement data for the offline kalman
 measurementsGPS = [data_lab.Time X Y];
@@ -264,7 +262,7 @@ R = eye(7);
     [P1,Kalman_gain1,eig] = idare(A_d',C1',Q,R,[],[]);
     eig1 = abs(eig);
     Kalman_gain1 = Kalman_gain1';
-    Ts_GPS = 1; % sampling rate of the GPS
+    Ts_GPS = 0.1; % sampling rate of the GPS
     counter = (Ts_GPS / Ts) - 1 ; % Upper limit of the counter for activating the flag
 
 % Polish the kalman gain (values <10-5 are set to zero)
@@ -348,7 +346,7 @@ R =Rscale* [R_GPS 0 0 0 0 0 0;
     [P1,Kalman_gain1,eig] = idare(A_d',C1',Q,R,[],[]);
     eig1 = abs(eig);
     Kalman_gain1 = Kalman_gain1';
-    Ts_GPS = 1; % sampling rate of the GPS
+    Ts_GPS = 0.1; % sampling rate of the GPS
     counter = (Ts_GPS / Ts) - 1 ; % Upper limit of the counter for activating the flag 
 
 % Polish the kalman gain (values <10-5 are set to zero)
@@ -623,11 +621,12 @@ end
 %labview data
 if select == 2
 fig = figure();
-plot(Results2.sim_Kalman.Data(:,1)-measurementsGPS(1,2), Results2.sim_Kalman.Data(:,2)-measurementsGPS(1,3))
+% plot(Results2.sim_Kalman.Data(:,1)-measurementsGPS(1,2), Results2.sim_Kalman.Data(:,2)-measurementsGPS(1,3))
+% hold on
+% plot(data_lab.StateEstimateX_m_ -measurementsGPS(1,2),data_lab.StateEstimateY_m_-measurementsGPS(1,3))
+plot(measurementsGPS(:,2),measurementsGPS(:,3))
 hold on
-plot(data_lab.StateEstimateX_m_ -measurementsGPS(1,2),data_lab.StateEstimateY_m_-measurementsGPS(1,3))
-plot(measurementsGPS(:,2)-measurementsGPS(1,2),measurementsGPS(:,3)-measurementsGPS(1,3))
-plot(Table_traj.Var1-measurementsGPS(1,2),Table_traj.Var2-measurementsGPS(1,3))
+plot(Table_traj.Var1(:),Table_traj.Var2(:))
 xlabel('X position (m)')
 ylabel('Y position (m)')
 axis equal
@@ -702,7 +701,7 @@ subplot(428)
 plot(Results2.sim_Kalman.Time, Results2.sim_Kalman.Data(:,7)*bike_params.r_wheel)
 hold on
 plot(data_lab.Time, data_lab.StateEstimateVelocity_m_s_)
-plot(data_lab.Time,data_lab.SpeedGPS_m_s_*bike_params.r_wheel)
+plot(data_lab.Time,data_lab.SpeedVESC_rad_s_*bike_params.r_wheel)
 xlabel('Time (s)')
 ylabel('velocity (m/s)')
 grid on
@@ -780,7 +779,6 @@ ylabel('error1 (m)')
 grid on
 title('Lateral error')
 
-
 subplot(224)
 plot(data_lab.Time,rad2deg(data_lab.Error2))
 xlabel('Time (s)')
@@ -789,7 +787,18 @@ grid on
 title('Heading error')
 
 figure()
+subplot(211)
 plot(data_lab.Time,rad2deg(data_lab.SteerrateInput_rad_s_))
+xlabel('Time (s)')
+ylabel('angle [Deg]')
+grid on
+title('Steerrate from balancing controller')
+
+subplot(212) 
+plot(data_lab.Time,rad2deg(data_lab.Input))
+title('Input balancing controller (generated rollref)')
+xlabel('Time (s)')
+ylabel('angle [Deg]')
 
 %% Utility Functions
 
@@ -804,9 +813,9 @@ function Parameters = LoadBikeParameters(bike)
         Parameters.lr = 0.4964;             % distance from rear wheel to frame's center of mass [m]
         Parameters.lf = 1.095-0.4964;       % distance from front wheel to frame's center of mass [m]
         Parameters.c = 0.06;               % length between front wheel contact point and the extention of the fork axis [m]
-        Parameters.m = 45;                 % Bike mas [kg]
+        Parameters.m = 45;                 % Bike mass [kg]
         Parameters.lambda = deg2rad(70);   % angle of the fork axis [deg]
-        Parameters.IMU_height = 0.71;      % IMU height [m]
+        Parameters.IMU_height = 0.615;      % IMU height [m]
         Parameters.IMU_x = 0.0;           % x Position of the IMU measured from rear wheel (parallel to bike) [m]
         Parameters.IMU_roll = 0;           % Orientation offset in roll (degrees)
         Parameters.IMU_pitch = 0;            % Orientation offset in pitch (degrees)
@@ -824,7 +833,7 @@ function Parameters = LoadBikeParameters(bike)
         Parameters.c_mod = 0.06;                % length between front wheel contact point and the extention of the fork axis [m]
         Parameters.m_mod = 45;                  % Bike mas [kg]
         Parameters.lambda_mod = deg2rad(70);    % angle of the fork axis [deg]
-        Parameters.IMU_height_mod = 0.71;      % IMU height [m]
+        Parameters.IMU_height_mod = 0.615;      % IMU height [m]
         Parameters.IMU_x_mod = 0.0;           % x Position of the IMU measured from rear wheel (parallel to bike) [m]
         Parameters.IMU_roll_mod = 0;           % Orientation offset in roll (degrees)
         Parameters.IMU_pitch_mod = 0;            % Orientation offset in pitch (degrees)
