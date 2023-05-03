@@ -61,7 +61,7 @@ ref_dis = 1;
 % Number# of reference points
 N = 100; 
 % Scale (only for infinite and circle)
-scale = 10; 
+scale = 40; 
 
 [Xref,Yref,Psiref] = ReferenceGenerator(type,ref_dis,N,scale);
 test_curve=[Xref,Yref,Psiref];
@@ -82,7 +82,7 @@ Output_reference_test = referenceTest(test_curve,hor_dis,Ts,initial_pose,v, ref_
 
 %update initial states if offset is detected
 initial_state.x = Output_reference_test(1);
-initial_state.y = Output_reference_test(2)+1;
+initial_state.y = Output_reference_test(2);
 initial_state.heading = Output_reference_test(3);
 initial_pose = [initial_state.x; initial_state.y; initial_state.heading];
 initial_state_estimate = initial_state;
@@ -173,14 +173,14 @@ B_con=[lr*v/(lr+lf);v/(lr+lf)];
  Q=kk*[1000 0;0 100];
  R=0.5;
  [K,S,e] = lqr(A_con,B_con,Q,R);
- k1=K(1)*2;
+ k1=K(1);
  k2=K(2);
 
-% e2_max=deg2rad(30);%Here is the e2_max we used to calculate e1_max
-% e1_max=abs(-k2*e2_max/k1);% k1,k2 has been known, so we can calculate e1_max
+e2_max=deg2rad(30);%Here is the e2_max we used to calculate e1_max
+e1_max=abs(-k2*e2_max/k1);% k1,k2 has been known, so we can calculate e1_max
 
-e2_max=deg2rad(30);
-e1_max=abs(1000);
+% e2_max=deg2rad(30);
+% e1_max=abs(1000);
 
 %% Transfer function for heading in wrap traj
 
@@ -195,8 +195,8 @@ Bd_t = B_t*Ts;
 
 %% Kalman Filter
 
-% A matrix (linear bicycle model with constant velocity)
-% Est_States := [X Y psi phi phi_dot delta v]
+% % A matrix (linear bicycle model with constant velocity)
+% % Est_States := [X Y psi phi phi_dot delta v]
 A = [0 0 0 0 0 0 1;
      0 0 v 0 0 v*(lr/(lf+lr))*sin(lambda) 0;
      0 0 0 0 0 (v/(lr+lf))*sin(lambda) 0;

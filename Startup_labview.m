@@ -81,12 +81,6 @@ grid on
 legend('Original trajectory', 'adjusted trajectory')
 title('Trajectory')
 
-x1=deg2rad(11.998123)*6371000.0;
-y1=deg2rad(57.670587)*6371000.0;
-x2=deg2rad(11.999180)*6371000.0;
-y2=deg2rad(57.670498)*6371000.0;
-
-startend = [x1 y1 x2 y2];
 %% Initial states
 % Initial states
 initial_X = traj(2,1);
@@ -167,7 +161,7 @@ B = [0 0 0 0 ((lr*v)/(h*(lr+lf))) 1 0]';
 % Including GPS
 C1 = [1 0 0 0 0 0 0;
      0 1 0 0 0 0 0;
-     0 0 0 -g+((-h_imu*g)/h) 0 (-h_imu*(h*v^2-(g*lr*c)))*sin(lambda)/((lr+lf)*h^2) + (v^2)*sin(lambda)/(lr+lf) 0;
+     0 0 0 g+((-h_imu*g)/h) 0 (-h_imu*(h*v^2-(g*lr*c)))*sin(lambda)/((lr+lf)*h^2) + (v^2)*sin(lambda)/(lr+lf) 0;
      0 0 0 0 1 0 0;
      0 0 0 0 0 (v)*sin(lambda)/(lr+lf) 0;
      0 0 0 0 0 1 0;
@@ -176,7 +170,7 @@ C1 = [1 0 0 0 0 0 0;
 D1 = [0 0 (-h_imu*lr*v)/((lr+lf)*h) 0 0 0 0]';
 
 % Excluding GPS
-C2 = [(-g+((-h_imu*g)/h)) 0 (-h_imu*(h*v^2-(g*lr*c)))*sin(lambda)/((lr+lf)*h^2)+(v^2)*sin(lambda)/(lr+lf) 0;
+C2 = [(g+((-h_imu*g)/h)) 0 (-h_imu*(h*v^2-(g*lr*c)))*sin(lambda)/((lr+lf)*h^2)+(v^2)*sin(lambda)/(lr+lf) 0;
       0 1 0 0;
       0 0 (v)*sin(lambda)/(lr+lf) 0;
       0 0 1 0;

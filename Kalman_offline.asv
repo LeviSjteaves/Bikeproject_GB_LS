@@ -14,7 +14,7 @@ clc;
     % Name of the model
         model = 'Kalman_offline_sim';
     % Sampling Time
-        Ts = 0.01; 
+        Ts = 0.023; 
     % Open the Simulink Model
         open([model '.slx']);
     % Choose the solver
@@ -32,7 +32,7 @@ clc;
 % Simulation measurements: 3 m/s
     v=2; 
 % set the initial global coordinate system for gps coordinates
-    gps_delay = 50;
+    gps_delay = 5;
 % Choose The Bike - Options: 'red' or 'black' 
 % Yixiao uses black 
 % Simulation uses red
@@ -118,14 +118,14 @@ Y = Earth_rad * (deg2rad(data_Yi.latitude) - latitude0);
 
 ay = data_Yi.ay;
 omega_x = data_Yi.RollRate;
-omega_y = data_Yi.gy;
+omega_z = data_Yi.gy;
 delta_enc = data_Yi.SteeringAngle - data_Yi.steering_offset;
 v_enc = data_Yi.FilteredVelocity;
 
 % Prepare measurement data for the offline kalman
 measurementsGPS = [data_Yi.GPS_timestamp X Y];
 measurementsGPS(1,:) = [];
-measurements = [data_Yi.Time ay omega_x omega_y delta_enc v_enc];
+measurements = [data_Yi.Time ay omega_x omega_z delta_enc v_enc];
 measurements(1,:) = [];
 steer_rate = [data_Yi.Time data_Yi.SteeringAngle];
 steer_rate(1,:) = [];
@@ -168,6 +168,9 @@ end
 
 if select == 2
 
+% [data_lab_,data_lab_idx,data_lab_ic1] = unique(data_lab.StateEstimateX_m_,'stable');
+% data_lab = data_lab(data_lab_idx,:);
+
 reset_traj = find(data_lab.ResetTraj==1,1,'last');
 data_lab(1:reset_traj,:) = [];
 
@@ -184,14 +187,14 @@ data_lab.Time = (data_lab.Time_ms_-data_lab.Time_ms_(1))*0.001;
 
 ay = -data_lab.AccelerometerY_rad_s_2_;
 omega_x = data_lab.GyroscopeX_rad_s_;
-omega_y = data_lab.GyroscopeZ_rad_s_;
+omega_z = data_lab.GyroscopeZ_rad_s_;
 delta_enc = data_lab.SteeringAngleEncoder_rad_;
-v_enc = data_lab.SpeedVESC_rad_s_;
+v_enc = data_lab.SpeedVESC_rad_s_*bike_params.r_wheel;
 
 % Prepare measurement data for the offline kalman
 measurementsGPS = [data_lab.Time X Y];
 measurementsGPS(1:gps_init,:) = [];
-measurements = [data_lab.Time ay omega_x omega_y delta_enc v_enc];
+measurements = [data_lab.Time ay omega_x omega_z delta_enc v_enc];
 measurements(1,:) = [];
 steer_rate = [data_lab.Time data_lab.SteerrateInput_rad_s_];
 steer_rate(1,:) = [];
@@ -211,6 +214,9 @@ Table_traj.Var2 = Table_traj.Var2+Y(1);
         initial_state.heading = Table_traj.Var3(1);
         initial_pose = [initial_state.x; initial_state.y; initial_state.heading];
         initial_state_estimate = initial_state;
+
+sample_diff = diff(measurements(:,1));
+
 end
 
 
@@ -343,11 +349,15 @@ R =Rscale* [R_GPS 0 0 0 0 0 0;
 
 % Compute Kalman Gain
     % including GPS
-    [P1,Kalman_gain1,eig] = idare(A_d',C1',Q,R,[],[]);
-    eig1 = abs(eig);
+    [P1,Kalman_gain1,eig_K] = idare(A_d',C1',Q,R,[],[]);
+    eig1_K = abs(eig_K);
     Kalman_gain1 = Kalman_gain1';
     Ts_GPS = 0.1; % sampling rate of the GPS
     counter = (Ts_GPS / Ts) - 1 ; % Upper limit of the counter for activating the flag 
+%      Kalman_gain1(:,4) = 0;
+%      Kalman_gain1(:,3) = 0;
+%      Kalman_gain1(:,5) = 0;
+     Kalman_gain1(:,6) = 0;
 
 % Polish the kalman gain (values <10-5 are set to zero)
 for i = 1:size(Kalman_gain1,1)
@@ -634,6 +644,10 @@ grid on
 legend('offline Kalman estimation', 'online estimation', 'GPS measurements','trajectory')
 title('Comparison with Kalman estimator on bike')
 
+figure()
+scatter(1:568,sample_diff)
+
+
 fig = figure();
 subplot(421)
 plot(Results2.sim_Kalman.Time,Results2.sim_Kalman.Data(:,1)-measurementsGPS(1,2))
@@ -670,9 +684,10 @@ plot(Results2.sim_Kalman.Time, rad2deg(Results2.sim_Kalman.Data(:,4)))
 hold on
 plot(data_lab.Time,rad2deg(data_lab.StateEstimateRoll_rad_))
 plot(Results2.integration_rollrate.Time, rad2deg(Results2.integration_rollrate.Data))
-plot(data_lab.Time,rad2deg(data_lab.Rollref))
+% plot(data_lab.Time,rad2deg(data_lab.Rollref))
 xlabel('Time (s)')
 ylabel('Roll (deg)')
+ylim([-1 50])
 grid on
 legend('offline Kalman estimation Tuned R', 'Online estimation','Integration Rollrate','rollref')
 title('Comparison with Kalman estimator on bike')
@@ -698,10 +713,10 @@ grid on
 legend('offline Kalman estimation Tuned R', 'Online estimation', 'Measurement')
 
 subplot(428)
-plot(Results2.sim_Kalman.Time, Results2.sim_Kalman.Data(:,7)*bike_params.r_wheel)
+plot(Results2.sim_Kalman.Time, Results2.sim_Kalman.Data(:,7))
 hold on
 plot(data_lab.Time, data_lab.StateEstimateVelocity_m_s_)
-plot(data_lab.Time,data_lab.SpeedVESC_rad_s_*bike_params.r_wheel)
+plot(data_lab.Time, v_enc)
 xlabel('Time (s)')
 ylabel('velocity (m/s)')
 grid on
@@ -739,9 +754,9 @@ grid on
 legend('prediction','meas')
 
 subplot(224)
-plot(Results2.y_hat.Time,Results2.y_hat.Data(:,4)*bike_params.r_wheel)
+plot(Results2.y_hat.Time,Results2.y_hat.Data(:,4))
 hold on
-plot(measurements(:,1),measurements(:,6)*bike_params.r_wheel)
+plot(measurements(:,1),measurements(:,6))
 xlabel('Time (s)')
 ylabel(' (m/s)')
 title('velocity')
@@ -786,9 +801,19 @@ ylabel('error2 [Deg]')
 grid on
 title('Heading error')
 
+diff_steerrate = diff(data_lab.SteerrateInput_rad_s_);
+
+Time = data_lab.Time_ms_ * 1e-3;
+Time = Time - Time(1);
+diffTime = diff(Time);
+EncoderSpeed = diff_steerrate./diffTime;
+
 figure()
 subplot(211)
 plot(data_lab.Time,rad2deg(data_lab.SteerrateInput_rad_s_))
+hold on
+plot(Time, EncoderSpeed)
+plot(data_lab.Time,rad2deg(data_lab.SteeringAngleEncoder_rad_))
 xlabel('Time (s)')
 ylabel('angle [Deg]')
 grid on

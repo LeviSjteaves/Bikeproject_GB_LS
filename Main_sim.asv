@@ -14,7 +14,7 @@ clc;
     % Name of the model
         model = 'Main_bikesim';
     % Simulation time
-        sim_time = 1000;
+        sim_time = 100;
 
     % Sampling Time
         Ts = 0.01; 
@@ -55,13 +55,13 @@ clc;
 %% Reference trajectory generation
 
 % SHAPE options: sharp_turn, line, infinite, circle, ascent_sin, smooth_curve
-type = 'line';
+type = 'circle';
 % Distance between points
 ref_dis = 1;
 % Number# of reference points
-N = 1000; 
+N = 100; 
 % Scale (only for infinite and circle)
-scale = 30; 
+scale = 40; 
 
 [Xref,Yref,Psiref] = ReferenceGenerator(type,ref_dis,N,scale);
 test_curve=[Xref,Yref,Psiref];
@@ -82,7 +82,7 @@ Output_reference_test = referenceTest(test_curve,hor_dis,Ts,initial_pose,v, ref_
 
 %update initial states if offset is detected
 initial_state.x = Output_reference_test(1);
-initial_state.y = Output_reference_test(2)+1;
+initial_state.y = Output_reference_test(2);
 initial_state.heading = Output_reference_test(3);
 initial_pose = [initial_state.x; initial_state.y; initial_state.heading];
 initial_state_estimate = initial_state;
@@ -179,6 +179,9 @@ B_con=[lr*v/(lr+lf);v/(lr+lf)];
 e2_max=deg2rad(30);%Here is the e2_max we used to calculate e1_max
 e1_max=abs(-k2*e2_max/k1);% k1,k2 has been known, so we can calculate e1_max
 
+% e2_max=deg2rad(30);
+% e1_max=abs(1000);
+
 %% Transfer function for heading in wrap traj
 
 % Transform tf into ss
@@ -192,38 +195,40 @@ Bd_t = B_t*Ts;
 
 %% Kalman Filter
 
-% A matrix (linear bicycle model with constant velocity)
-% Est_States := [X Y psi phi phi_dot delta v]
-A = [0 0 0 0 0 0 1;
-     0 0 v 0 0 v*(lr/(lf+lr))*sin(lambda) 0;
-     0 0 0 0 0 (v/(lr+lf))*sin(lambda) 0;
-     0 0 0 0 1 0 0;
-     0 0 0 (g/h) 0 ((v^2*h-lr*g*c)/(h^2*(lr+lf)))*sin(lambda) 0;
-     0 0 0 0 0 0 0;
-     0 0 0 0 0 0 0];
+% % A matrix (linear bicycle model with constant velocity)
+% % Est_States := [X Y psi phi phi_dot delta v]
+% A = [0 0 0 0 0 0 1;
+%      0 0 v 0 0 v*(lr/(lf+lr))*sin(lambda) 0;
+%      0 0 0 0 0 (v/(lr+lf))*sin(lambda) 0;
+%      0 0 0 0 1 0 0;
+%      0 0 0 (g/h) 0 ((v^2*h-lr*g*c)/(h^2*(lr+lf)))*sin(lambda) 0;
+%      0 0 0 0 0 0 0;
+%      0 0 0 0 0 0 0];
+% 
+% % B matrix (linear bicycle model with constant velocity)
+% B = [0 0 0 0 ((lr*v)/(h*(lr+lf))) 1 0]';
+% 
+% % Including GPS
+% C1 = [1 0 0 0 0 0 0;
+%      0 1 0 0 0 0 0;
+%      0 0 0 -g+((-h_imu*g)/h) 0 (-h_imu*(h*v^2-(g*lr*c)))*sin(lambda)/((lr+lf)*h^2) + (v^2)*sin(lambda)/(lr+lf) 0;
+%      0 0 0 0 1 0 0;
+%      0 0 0 0 0 (v)*sin(lambda)/(lr+lf) 0;
+%      0 0 0 0 0 1 0;
+%      0 0 0 0 0 0 1];
+% 
+% D1 = [0 0 (-h_imu*lr*v)/((lr+lf)*h) 0 0 0 0]';
+% 
+% % Excluding GPS
+% C2 = [(-g+((-h_imu*g)/h)) 0 (-h_imu*(h*v^2-(g*lr*c)))*sin(lambda)/((lr+lf)*h^2)+(v^2)*sin(lambda)/(lr+lf) 0;
+%       0 1 0 0;
+%       0 0 (v)*sin(lambda)/(lr+lf) 0;
+%       0 0 1 0;
+%       0 0 0 1];
+% 
+% D2 = [(-h_imu*lr*v)/((lr+lf)*h) 0 0 0 0]';
 
-% B matrix (linear bicycle model with constant velocity)
-B = [0 0 0 0 ((lr*v)/(h*(lr+lf))) 1 0]';
 
-% Including GPS
-C1 = [1 0 0 0 0 0 0;
-     0 1 0 0 0 0 0;
-     0 0 0 -g+((-h_imu*g)/h) 0 (-h_imu*(h*v^2-(g*lr*c)))*sin(lambda)/((lr+lf)*h^2) + (v^2)*sin(lambda)/(lr+lf) 0;
-     0 0 0 0 1 0 0;
-     0 0 0 0 0 (v)*sin(lambda)/(lr+lf) 0;
-     0 0 0 0 0 1 0;
-     0 0 0 0 0 0 1];
-
-D1 = [0 0 (-h_imu*lr*v)/((lr+lf)*h) 0 0 0 0]';
-
-% Excluding GPS
-C2 = [(-g+((-h_imu*g)/h)) 0 (-h_imu*(h*v^2-(g*lr*c)))*sin(lambda)/((lr+lf)*h^2)+(v^2)*sin(lambda)/(lr+lf) 0;
-      0 1 0 0;
-      0 0 (v)*sin(lambda)/(lr+lf) 0;
-      0 0 1 0;
-      0 0 0 1];
-
-D2 = [(-h_imu*lr*v)/((lr+lf)*h) 0 0 0 0]';
 
 % Discretize the model
 A_d = (eye(size(A))+Ts*A);
@@ -306,8 +311,6 @@ toc
 %     disp('Message: End of the trajectory has been reached');
 % end
 
-
-
 % save the states for offline kalman
 bikedata_simulation_bikestates = array2table([Results.bike_states.Time Results.bike_states.Data]);
 filename_simulation_bikestates = 'bikedata_simulation_bikestates.csv'; % Specify the filename
@@ -324,6 +327,7 @@ writetable(bikedata_simulation,filename_simulation);
 %name of the plot
 Tnumber = 'No test case: General simulation run';
         Plot_bikesimulation_results(Tnumber, Ts, test_curve, Results);
+
 end
 
 %% Test cases for validation
