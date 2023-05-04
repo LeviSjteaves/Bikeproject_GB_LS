@@ -27,6 +27,10 @@ offset_X = 0;
 offset_Y = 0;
 offset_Psi = deg2rad(0); 
 
+% Calculate starting point in case of creating your own trajectory
+long_start = 50;
+lat_start = 10;
+
 %% Trajectory creator
 % recorded trajectory
 
@@ -48,6 +52,21 @@ traj_or_rec(1,:) = [];
 filename_trajectory = 'trajectorymat.csv';
 dlmwrite( filename_trajectory, traj_or_rec, 'delimiter', ',', 'precision', 10);
 
+end
+
+if TrajectoryRecord == 2
+longitude0 = deg2rad(0);
+latitude0 = deg2rad(0);
+Earth_rad = 6371000.0;
+X = Earth_rad * (long_start - longitude0) * cos(latitude0);
+Y = Earth_rad * (lat_start - latitude0);
+TrajectoryCreator()
+disp('X start = ') 
+disp(X)
+disp('Y start = ')
+disp(Y)
+disp('Create your trajectory and press a key to continue !')
+pause
 end
 
 % Apply offset trajectory

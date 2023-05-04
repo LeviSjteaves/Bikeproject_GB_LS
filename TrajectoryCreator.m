@@ -15,7 +15,7 @@ trajectory = [0;0];
 global n;
 
 % Create the main window and set its size
-figure('Name','GUI','Position', [50, 100, 500, 500]);
+figure('Name','GUI','Position', [50, 250, 500, 500]);
 
 % Create an edit box to enter number of points
 edit_n = uicontrol('Style', 'edit', 'String', num2str(default_n), ...
@@ -141,9 +141,9 @@ uicontrol('Style', 'pushbutton', 'String', 'Save', ...
 
 % Initialize the data matrix to an empty array
 data = [];
-figure('Name','Example of segment','Position', [550, 100, 500, 500])
+figure('Name','Example of segment','Position', [550, 250, 500, 500])
 
-figure('Name','Example of segment','Position', [1050, 100, 500, 500])
+figure('Name','Example of segment','Position', [1050, 250, 500, 500])
 % Define the functions to plot each shape
        function [x, y] = plot_line(~, ~)
         n = str2double(get(edit_n, 'String'));
