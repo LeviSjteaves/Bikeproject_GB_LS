@@ -139,6 +139,10 @@ sampletime_diff_filter = sampletime_diff_log./sampletime_it_filter;
 sampletime_it_traj = diff(data_lab.TrajectoryIterations);
 sampletime_diff_traj = sampletime_diff_log./sampletime_it_traj;
 
+%GPS
+sampletime_it_GPS = diff(data_lab.flag);
+sampletime_diff_GPS = sampletime_diff_log./sampletime_it_GPS;
+
 %% Kalman Filter
 % A matrix (linear bicycle model with constant velocity)
 % Est_States := [X Y psi phi phi_dot delta v]
@@ -464,6 +468,7 @@ scatter(1:length(data_lab.Time)-1,sampletime_diff_log)
 hold on
 scatter(1:length(data_lab.Time)-1,sampletime_diff_filter)
 scatter(1:length(data_lab.Time)-1,sampletime_diff_traj,'*')
+scatter(1:length(data_lab.Time)-1,sampletime_diff_GPS,'*')
 legend('Logging Ts','State estimator Ts','Trajectory Ts')
 title('average iteration times')
 xlabel('Time (s)')
