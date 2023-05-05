@@ -128,16 +128,16 @@ Table_traj.Var2 = Table_traj.Var2+GPS_offset_Y;
 
 %% mirror sample times
 
-% %logging
-% sampletime_diff_log = diff(data_lab.Time);
-% 
-% %state estimator
-% sampletime_it_filter = diff(data_lab.StateEstimatorIterations);
-% sampletime_diff_filter = sampletime_diff_log./sampletime_it_filter;
-% 
-% %trajectory
-% sampletime_it_traj = diff(data_lab.TrajectoryIterations);
-% sampletime_diff_traj = sampletime_diff_log./sampletime_it_traj;
+%logging
+sampletime_diff_log = diff(data_lab.Time);
+
+%state estimator
+sampletime_it_filter = diff(data_lab.StateEstimatorIterations);
+sampletime_diff_filter = sampletime_diff_log./sampletime_it_filter;
+
+%trajectory
+sampletime_it_traj = diff(data_lab.TrajectoryIterations);
+sampletime_diff_traj = sampletime_diff_log./sampletime_it_traj;
 
 %% Kalman Filter
 % A matrix (linear bicycle model with constant velocity)
@@ -273,12 +273,12 @@ close all
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %labview data
 fig = figure();
-plot(Results2.sim_Kalman.Data(:,1), Results2.sim_Kalman.Data(:,2))
+plot(Results2.sim_Kalman.Data(:,1)-X(1), Results2.sim_Kalman.Data(:,2)-Y(1))
 hold on
-plot(data_lab.StateEstimateX_m_ ,data_lab.StateEstimateY_m_)
-plot(measurementsGPS(:,2),measurementsGPS(:,3))
+plot(data_lab.StateEstimateX_m_ -X(1),data_lab.StateEstimateY_m_-Y(1))
+plot(measurementsGPS(:,2)-X(1),measurementsGPS(:,3)-Y(1))
 hold on
-plot(Table_traj.Var1(:),Table_traj.Var2(:))
+plot(Table_traj.Var1(:)-X(1),Table_traj.Var2(:)-Y(1))
 xlabel('X position (m)')
 ylabel('Y position (m)')
 axis equal
@@ -401,7 +401,7 @@ grid on
 legend('prediction','meas')
 
 figure()
-subplot(221)
+subplot(321)
 plot(data_lab.Time,rad2deg(data_lab.Rollref))
 hold on
 plot(data_lab.Time,rad2deg(data_lab.DpsirefContribution)+rad2deg(data_lab.HeadingContribution)+rad2deg(data_lab.LateralContribution))
@@ -412,7 +412,7 @@ title('roll vs delta references')
 legend('Rollreference','deltaref')
 
 
-subplot(222)
+subplot(322)
 plot(data_lab.Time,rad2deg(data_lab.LateralContribution))
 hold on
 plot(data_lab.Time,rad2deg(data_lab.HeadingContribution))
@@ -423,19 +423,26 @@ title('delta contributions')
 grid on
 legend('lateral','heading','dpsi')
 
-subplot(223)
+subplot(323)
 plot(data_lab.Time,data_lab.Error1)
 xlabel('Time (s)')
 ylabel('error1 (m)')
 grid on
 title('Lateral error')
 
-subplot(224)
+subplot(324)
 plot(data_lab.Time,rad2deg(data_lab.Error2))
 xlabel('Time (s)')
 ylabel('error2 [Deg]')
 grid on
 title('Heading error')
+
+subplot(325)
+plot(data_lab.Time,data_lab.Closestpoint)
+xlabel('Time (s)')
+ylabel('Closest point [-]')
+grid on
+title('closest point')
 
 figure()
 subplot(211)
@@ -452,15 +459,15 @@ title('Input balancing controller (generated rollref)')
 xlabel('Time (s)')
 ylabel('angle [Deg]')
 
-% figure()
-% scatter(1:length(data_lab.Time)-1,sampletime_diff_log)
-% hold on
-% scatter(1:length(data_lab.Time)-1,sampletime_diff_filter)
-% scatter(1:length(data_lab.Time)-1,sampletime_diff_traj,'*')
-% legend('Logging Ts','State estimator Ts','Trajectory Ts')
-% title('average iteration times')
-% xlabel('Time (s)')
-% ylabel('Ts [s]')
+figure()
+scatter(1:length(data_lab.Time)-1,sampletime_diff_log)
+hold on
+scatter(1:length(data_lab.Time)-1,sampletime_diff_filter)
+scatter(1:length(data_lab.Time)-1,sampletime_diff_traj,'*')
+legend('Logging Ts','State estimator Ts','Trajectory Ts')
+title('average iteration times')
+xlabel('Time (s)')
+ylabel('Ts [s]')
 
 %% Utility Functions
 
