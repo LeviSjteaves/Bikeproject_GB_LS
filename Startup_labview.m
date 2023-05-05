@@ -20,7 +20,7 @@ clc;
 % Load the parameters of the specified bicycle
     bike_params = LoadBikeParameters(bike); 
 % Trajectory Record : 1=using measurment data GPS as trajectory
-TrajectoryRecord = 1;
+TrajectoryRecord = 0;
 
 % Trajectory offset
 offset_X = 0;
@@ -28,8 +28,8 @@ offset_Y = 0;
 offset_Psi = deg2rad(0); 
 
 % Calculate starting point in case of creating your own trajectory
-long_start = 50;
-lat_start = 10;
+long_start = deg2rad(57.68755656300765);
+lat_start = deg2rad(11.978256853033995);
 
 %% Trajectory creator
 % recorded trajectory
@@ -42,12 +42,13 @@ Earth_rad = 6371000.0;
 X = Earth_rad * (data_lab.LongGPS_deg_ - longitude0) * cos(latitude0);
 Y = Earth_rad * (data_lab.LatGPS_deg_ - latitude0);
 
-XY = unique([X Y],'rows');
+% XY = unique([X Y],'rows');
+XY = unique([X Y],'rows','stable');
 n = length(XY);
 
 psiref = atan2(XY(2:n,2)-XY(1:n-1,2),XY(2:n,1)-XY(1:n-1,1));
 traj_or_rec = [XY [psiref(1);psiref]];
-traj_or_rec(1,:) = []; 
+traj_or_rec(1:3,:) = []; 
 
 filename_trajectory = 'trajectorymat.csv';
 dlmwrite( filename_trajectory, traj_or_rec, 'delimiter', ',', 'precision', 10);
@@ -180,7 +181,7 @@ B = [0 0 0 0 ((lr*v)/(h*(lr+lf))) 1 0]';
 % Including GPS
 C1 = [1 0 0 0 0 0 0;
      0 1 0 0 0 0 0;
-     0 0 0 g+((-h_imu*g)/h) 0 (-h_imu*(h*v^2-(g*lr*c)))*sin(lambda)/((lr+lf)*h^2) + (v^2)*sin(lambda)/(lr+lf) 0;
+     0 0 0 -g+((-h_imu*g)/h) 0 (-h_imu*(h*v^2-(g*lr*c)))*sin(lambda)/((lr+lf)*h^2) + (v^2)*sin(lambda)/(lr+lf) 0;
      0 0 0 0 1 0 0;
      0 0 0 0 0 (v)*sin(lambda)/(lr+lf) 0;
      0 0 0 0 0 1 0;
@@ -189,7 +190,7 @@ C1 = [1 0 0 0 0 0 0;
 D1 = [0 0 (-h_imu*lr*v)/((lr+lf)*h) 0 0 0 0]';
 
 % Excluding GPS
-C2 = [(g+((-h_imu*g)/h)) 0 (-h_imu*(h*v^2-(g*lr*c)))*sin(lambda)/((lr+lf)*h^2)+(v^2)*sin(lambda)/(lr+lf) 0;
+C2 = [(-g+((-h_imu*g)/h)) 0 (-h_imu*(h*v^2-(g*lr*c)))*sin(lambda)/((lr+lf)*h^2)+(v^2)*sin(lambda)/(lr+lf) 0;
       0 1 0 0;
       0 0 (v)*sin(lambda)/(lr+lf) 0;
       0 0 1 0;

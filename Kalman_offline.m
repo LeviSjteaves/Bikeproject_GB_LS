@@ -14,7 +14,7 @@ clc;
     % Name of the model
         model = 'Kalman_offline_sim';
     % Sampling Time
-        Ts = 0.027; 
+        Ts = 0.01; 
     % Open the Simulink Model
         open([model '.slx']);
     % Choose the solver
@@ -108,8 +108,11 @@ steer_rate = [data_lab.Time data_lab.SteerrateInput_rad_s_];
 steer_rate(1,:) = [];
 gpsflag = [data_lab.Time data_lab.flag];
 
-Table_traj.Var1 = Table_traj.Var1+X(1);
-Table_traj.Var2 = Table_traj.Var2+Y(1);
+GPS_offset_X = X(1) - Table_traj.Var1(1);
+GPS_offset_Y = Y(1) - Table_traj.Var2(1);
+
+Table_traj.Var1 = Table_traj.Var1+GPS_offset_X;
+Table_traj.Var2 = Table_traj.Var2+GPS_offset_Y;
 
 % Initial Roll
         initial_state.roll = deg2rad(0);
@@ -123,7 +126,18 @@ Table_traj.Var2 = Table_traj.Var2+Y(1);
         initial_pose = [initial_state.x; initial_state.y; initial_state.heading];
         initial_state_estimate = initial_state;
 
-sampletime_diff = diff(measurements(:,1));
+%% mirror sample times
+
+% %logging
+% sampletime_diff_log = diff(data_lab.Time);
+% 
+% %state estimator
+% sampletime_it_filter = diff(data_lab.StateEstimatorIterations);
+% sampletime_diff_filter = sampletime_diff_log./sampletime_it_filter;
+% 
+% %trajectory
+% sampletime_it_traj = diff(data_lab.TrajectoryIterations);
+% sampletime_diff_traj = sampletime_diff_log./sampletime_it_traj;
 
 %% Kalman Filter
 % A matrix (linear bicycle model with constant velocity)
@@ -311,7 +325,6 @@ plot(Results2.integration_rollrate.Time, rad2deg(Results2.integration_rollrate.D
 plot(data_lab.Time,rad2deg(data_lab.Rollref))
 xlabel('Time (s)')
 ylabel('Roll (deg)')
-ylim([-1 50])
 grid on
 legend('offline Kalman estimation Tuned R', 'Online estimation','Integration Rollrate','rollref')
 title('Comparison with Kalman estimator on bike')
@@ -428,7 +441,6 @@ figure()
 subplot(211)
 plot(data_lab.Time,rad2deg(data_lab.SteerrateInput_rad_s_))
 hold on
-plot(data_lab.Time,rad2deg(data_lab.SteeringAngleEncoder_rad_))
 xlabel('Time (s)')
 ylabel('angle [Deg]')
 grid on
@@ -440,8 +452,15 @@ title('Input balancing controller (generated rollref)')
 xlabel('Time (s)')
 ylabel('angle [Deg]')
 
-figure()
-scatter(1:901,sampletime_diff)
+% figure()
+% scatter(1:length(data_lab.Time)-1,sampletime_diff_log)
+% hold on
+% scatter(1:length(data_lab.Time)-1,sampletime_diff_filter)
+% scatter(1:length(data_lab.Time)-1,sampletime_diff_traj,'*')
+% legend('Logging Ts','State estimator Ts','Trajectory Ts')
+% title('average iteration times')
+% xlabel('Time (s)')
+% ylabel('Ts [s]')
 
 %% Utility Functions
 

@@ -14,28 +14,21 @@ clc;
     % Name of the model
         model = 'Kalman_offline_sim';
     % Sampling Time
-        Ts = 0.027; 
+        Ts = 0.01; 
     % Open the Simulink Model
         open([model '.slx']);
     % Choose the solver
         set_param(model,'AlgebraicLoopSolver','TrustRegion');
 
     
-%%%%%%%%%%%%%GUI%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%GUI%%%%%%%%%%%%%%%%%%%%%%%%%
 % % reduce/increase simulation time for desired timescale on x-axis of the plots
 %     sim_time = 50;
-% 0 for Yixiao's measurement data, 1 for measurement data which is recorded during a simulation (infinity shape)
-% 2 for measurement data 'data' from labview
-    select = 2;
 % Take into account a valid speed. 
-% Yixiao's measurements: 0-2 m/s.
-% Simulation measurements: 3 m/s
     v=2; 
 % set the initial global coordinate system for gps coordinates
     gps_delay = 5;
 % Choose The Bike - Options: 'red' or 'black' 
-% Yixiao uses black 
-% Simulation uses red
     bike = 'red';
 % Load the parameters of the specified bicycle
     bike_params = LoadBikeParameters(bike); 
@@ -70,39 +63,14 @@ Rz = [cos(yaw) -sin(yaw) 0; sin(yaw) cos(yaw) 0; 0 0 1];        % Rotation matri
 
 T = Rz*Ry*Rx; 
 
-
 %% Load measurements
-% BikeData_Yixiao
-csv_name = 'BikeData_20230222-205544.csv';   data_range = [7, 34.1902]; %  tstvagain v24 3 seg step0
-CSV_With_EXCEPTION = 1;
-
-if CSV_With_EXCEPTION == 1
-    data_Yi = readtable(csv_name,'headerlines',1); 
-    data1_len = size(data_Yi,1);
-    opts = detectImportOptions(csv_name);
-    opts.DataLines = [4 data1_len]; % remove the last row, as it would be the termination flag
-    data_Yi = readtable(csv_name,opts);
-    fid = fopen(csv_name);
-    csv_Data = textscan(fid, '%[^\n]', data1_len+2, 'HeaderLines', 0);
-    csv_Data = csv_Data{1};
-    ExitFlag = split(csv_Data{data1_len+1}, ',');
-    ExitData = split(csv_Data{data1_len+2}, ',');
-     
-else
-    data_Yi = readtable(csv_name,'headerlines',1);
-end
-
-% BikeData from simulation
-data_sim = readtable('bikedata_simulink_simulation.csv');
-data_sim_states = readtable('bikedata_simulation_bikestates.csv');
-
 % BikeData from labview
 data_lab = readtable('data.csv');
 
 %% Load trajectory
 
 Table_traj = readtable('trajectorymat.csv');
-Table_traj(1,:) = [];
+% Table_traj(1,:) = [];
 
 %% Select right measurements and input AND initialize
 % Converting GPS data to X and Y position
@@ -140,8 +108,11 @@ steer_rate = [data_lab.Time data_lab.SteerrateInput_rad_s_];
 steer_rate(1,:) = [];
 gpsflag = [data_lab.Time data_lab.flag];
 
-Table_traj.Var1 = Table_traj.Var1+X(1);
-Table_traj.Var2 = Table_traj.Var2+Y(1);
+GPS_offset_X = X(1) - Table_traj.Var1(1);
+GPS_offset_Y = Y(1) - Table_traj.Var2(1);
+
+Table_traj.Var1 = Table_traj.Var1+GPS_offset_X;
+Table_traj.Var2 = Table_traj.Var2+GPS_offset_Y;
 
 % Initial Roll
         initial_state.roll = deg2rad(0);
@@ -155,10 +126,13 @@ Table_traj.Var2 = Table_traj.Var2+Y(1);
         initial_pose = [initial_state.x; initial_state.y; initial_state.heading];
         initial_state_estimate = initial_state;
 
-sampletime_diff = diff(measurements(:,1));
+%% mirror sample times
+sampletime_diff_log = diff(data_lab.Time);
+
+sampletime_it_filter = diff(data_lab.StateEstimatorIterations);
+sampletime_it_filter = sampletime_diff_log
 
 %% Kalman Filter
-
 % A matrix (linear bicycle model with constant velocity)
 % Est_States := [X Y psi phi phi_dot delta v]
 A = [0 0 0 0 0 0 1;
@@ -278,6 +252,8 @@ filename_matrix = 'matrixmat.csv'; % Specify the filename
 csvwrite(filename_matrix, matrixmat); % Write the matrix to the CSV file
 
 %% Offline Simulation
+sim_time = data_lab.Time(end);
+
 tic
 try Results2 = sim(model);
     catch error_details %note: the model has runned for one time here
@@ -290,9 +266,9 @@ close all
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %labview data
 fig = figure();
-plot(Results2.sim_Kalman.Data(:,1)-measurementsGPS(1,2), Results2.sim_Kalman.Data(:,2)-measurementsGPS(1,3))
+plot(Results2.sim_Kalman.Data(:,1), Results2.sim_Kalman.Data(:,2))
 hold on
-plot(data_lab.StateEstimateX_m_ -measurementsGPS(1,2),data_lab.StateEstimateY_m_-measurementsGPS(1,3))
+plot(data_lab.StateEstimateX_m_ ,data_lab.StateEstimateY_m_)
 plot(measurementsGPS(:,2),measurementsGPS(:,3))
 hold on
 plot(Table_traj.Var1(:),Table_traj.Var2(:))
@@ -339,10 +315,9 @@ plot(Results2.sim_Kalman.Time, rad2deg(Results2.sim_Kalman.Data(:,4)))
 hold on
 plot(data_lab.Time,rad2deg(data_lab.StateEstimateRoll_rad_))
 plot(Results2.integration_rollrate.Time, rad2deg(Results2.integration_rollrate.Data))
-% plot(data_lab.Time,rad2deg(data_lab.Rollref))
+plot(data_lab.Time,rad2deg(data_lab.Rollref))
 xlabel('Time (s)')
 ylabel('Roll (deg)')
-ylim([-1 50])
 grid on
 legend('offline Kalman estimation Tuned R', 'Online estimation','Integration Rollrate','rollref')
 title('Comparison with Kalman estimator on bike')
@@ -417,7 +392,6 @@ ylabel(' (m/s)')
 title('velocity')
 grid on
 legend('prediction','meas')
-end
 
 figure()
 subplot(221)
@@ -460,7 +434,6 @@ figure()
 subplot(211)
 plot(data_lab.Time,rad2deg(data_lab.SteerrateInput_rad_s_))
 hold on
-plot(data_lab.Time,rad2deg(data_lab.SteeringAngleEncoder_rad_))
 xlabel('Time (s)')
 ylabel('angle [Deg]')
 grid on
@@ -473,7 +446,7 @@ xlabel('Time (s)')
 ylabel('angle [Deg]')
 
 figure()
-scatter(1:901,sampletime_diff)
+scatter(1:length(data_lab.Time)-2,sampletime_diff_log)
 
 %% Utility Functions
 
